@@ -1,12 +1,15 @@
 import { DOMINIOS } from '../config'
 import { CARDS, type Dominio } from '../lib/cards'
 import { diaSP, montarFila, type Filtro } from '../lib/fila'
+import type { Ofensiva } from '../lib/ofensiva'
 import type { ProgressoMap } from '../lib/progresso'
 import { supabase } from '../lib/supabase'
+import OfensivaCard from './OfensivaCard'
 
 type Props = {
   email: string
   progresso: ProgressoMap
+  ofensiva: Ofensiva
   filtro: Filtro
   onFiltro: (f: Filtro) => void
   onComecar: () => void
@@ -14,7 +17,7 @@ type Props = {
 
 const CHIPS: Filtro[] = ['todos', ...(Object.keys(DOMINIOS) as Dominio[])]
 
-export default function Home({ email, progresso, filtro, onFiltro, onComecar }: Props) {
+export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onComecar }: Props) {
   const now = new Date()
   const hoje = diaSP(now)
   const fila = montarFila(progresso, filtro, now)
@@ -53,6 +56,8 @@ export default function Home({ email, progresso, filtro, onFiltro, onComecar }: 
           Sair
         </button>
       </header>
+
+      <OfensivaCard ofensiva={ofensiva} />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {CHIPS.map((c) => (

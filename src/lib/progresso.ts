@@ -5,11 +5,12 @@ import { supabase } from './supabase'
 export type Progresso = {
   card: Card
   createdAt: Date
+  updatedAt: Date
 }
 
 export type ProgressoMap = Map<string, Progresso>
 
-type Row = { card_id: string; estado: EstadoJson; created_at: string }
+type Row = { card_id: string; estado: EstadoJson; created_at: string; updated_at: string }
 
 const PAGINA = 1000
 
@@ -18,12 +19,16 @@ export async function carregarProgresso(): Promise<ProgressoMap> {
   for (let from = 0; ; from += PAGINA) {
     const { data, error } = await supabase
       .from('progresso')
-      .select('card_id, estado, created_at')
+      .select('card_id, estado, created_at, updated_at')
       .order('card_id')
       .range(from, from + PAGINA - 1)
     if (error) throw error
     for (const row of data as Row[]) {
-      map.set(row.card_id, { card: deserializeCard(row.estado), createdAt: new Date(row.created_at) })
+      map.set(row.card_id, {
+        card: deserializeCard(row.estado),
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
+      })
     }
     if (data.length < PAGINA) break
   }

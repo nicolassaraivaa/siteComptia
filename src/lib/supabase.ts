@@ -11,8 +11,5 @@ export const supabase = createClient(url, anonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
-    // implicit: o magic link funciona mesmo se abrir em outro navegador (ex.: app de email no celular)
-    flowType: 'implicit',
   },
 })

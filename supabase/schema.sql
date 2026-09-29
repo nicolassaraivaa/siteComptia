@@ -28,3 +28,21 @@ create policy "progresso_update_own" on public.progresso
 
 create policy "progresso_delete_own" on public.progresso
   for delete to authenticated using ((select auth.uid()) = user_id);
+
+-- Ofensiva (streak): um registro por dia (fuso America/Sao_Paulo) com pelo menos uma revisão
+create table public.atividade (
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  dia     date not null,
+  primary key (user_id, dia)
+);
+
+alter table public.atividade enable row level security;
+
+revoke all on public.atividade from anon;
+grant select, insert on public.atividade to authenticated;
+
+create policy "atividade_select_own" on public.atividade
+  for select to authenticated using ((select auth.uid()) = user_id);
+
+create policy "atividade_insert_own" on public.atividade
+  for insert to authenticated with check ((select auth.uid()) = user_id);
