@@ -1,1 +1,2073 @@
-[]
+[
+  {
+    "id": "d4-federation",
+    "frente": "Duas empresas parceiras querem que os usuários de uma acessem recursos da outra com o próprio login, sem unir os Active Directory. Qual solução atende?",
+    "verso": "Federation.\nCada organização mantém seu próprio diretório, e as identidades são aceitas entre elas por uma relação de confiança (trust).\nNão confundir: VPN site-to-site ≠ federation porque a VPN conecta redes e a federation conecta identidades.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: compartilhar autenticação entre duas organizações; confundi com VPN site-to-site.",
+    "tags": [
+      "iam",
+      "federation"
+    ]
+  },
+  {
+    "id": "d4-oauth",
+    "frente": "Você entra no Canva usando sua conta Google, e o Canva acessa dados limitados do Google sem conhecer sua senha. Qual protocolo permite isso?",
+    "verso": "OAuth.\nProtocolo de autorização: concede a um app acesso limitado a recursos de outro serviço, sem compartilhar a senha.\nNão confundir: OAuth ≠ MFA porque OAuth define o que pode acessar (autorização); MFA confirma quem é o usuário (autenticação).",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 3: OAuth; confundi autorização com autenticação.",
+    "tags": [
+      "iam",
+      "oauth"
+    ]
+  },
+  {
+    "id": "d4-provisioning",
+    "frente": "Um novo funcionário é contratado e, automaticamente, sua conta é criada, os grupos são configurados e os acessos são concedidos. Como se chama esse processo?",
+    "verso": "Provisioning (provisionamento).\nCriar e configurar contas, recursos e acessos, normalmente no onboarding.\nNão confundir: least privilege é dar só o acesso necessário; MFA é confirmar a identidade com múltiplos fatores.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: provisionamento no onboarding; confundi com menor privilégio/MFA.",
+    "tags": [
+      "iam",
+      "provisioning",
+      "onboarding"
+    ]
+  },
+  {
+    "id": "d4-ldap-dn",
+    "frente": "Qual atributo LDAP identifica de forma única uma entrada no diretório, como cn=joao,ou=ti,dc=empresa,dc=com?",
+    "verso": "DN (Distinguished Name).\nÉ o caminho completo e único da entrada na árvore LDAP.\nNão confundir: DC (Domain Component) ≠ DN porque o DC é só o pedaço do domínio (dc=empresa,dc=com) e não identifica uma entrada sozinho.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Questões erradas: atributo LDAP de identificação única; marquei DC.",
+    "tags": [
+      "iam",
+      "ldap"
+    ]
+  },
+  {
+    "id": "d4-user-rights",
+    "frente": "Um usuário pode fazer logon, desligar o computador e alterar a data/hora do sistema. Como se chamam esses privilégios de ação no sistema?",
+    "verso": "User rights.\nSão ações que o usuário pode realizar no sistema como um todo.\nNão confundir: permissions ≠ user rights porque permissions definem o acesso a um objeto específico (ler, modificar, excluir um arquivo).",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: user rights x permissions x DACL x SACL.",
+    "tags": [
+      "iam",
+      "controle-de-acesso",
+      "windows"
+    ]
+  },
+  {
+    "id": "d4-dacl",
+    "frente": "Qual lista de um objeto define quem pode acessá-lo e com quais permissões (allow/deny)?",
+    "verso": "DACL (Discretionary Access Control List).\nDefine permitir/negar acesso ao objeto.\nNão confundir: SACL ≠ DACL porque a SACL define o que deve ser auditado (registrado), não quem acessa.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: DACL x SACL.",
+    "tags": [
+      "iam",
+      "controle-de-acesso",
+      "windows"
+    ]
+  },
+  {
+    "id": "d4-sacl",
+    "frente": "A empresa quer registrar em log toda tentativa de excluir arquivos de uma pasta sensível. Qual lista do objeto configura isso?",
+    "verso": "SACL (System Access Control List).\nUsada para auditoria: define quais ações sobre o objeto são registradas.\nNão confundir: DACL permite/nega acesso; SACL audita.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: DACL x SACL.",
+    "tags": [
+      "iam",
+      "auditoria",
+      "windows"
+    ]
+  },
+  {
+    "id": "d4-deny-vence-allow",
+    "frente": "Um usuário recebe Allow explícito em uma pasta, mas um grupo dele tem Deny herdado nessa mesma pasta. Qual permissão vale?",
+    "verso": "Deny.\nDeny sempre vence Allow, seja explícito ou herdado: é a palavra final.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 04/09: deny x allow.",
+    "tags": [
+      "iam",
+      "controle-de-acesso",
+      "windows"
+    ]
+  },
+  {
+    "id": "d4-grupo-seguranca-vs-distribuicao",
+    "frente": "Um administrador precisa atribuir permissões em uma DACL para um grupo do Active Directory. Que tipo de grupo ele deve usar?",
+    "verso": "Grupo de segurança (security group).\nSó grupos de segurança carregam permissões.\nNão confundir: grupo de distribuição ≠ grupo de segurança porque o de distribuição serve só para email e não recebe permissões.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 04/09: grupo de segurança x distribuição na DACL.",
+    "tags": [
+      "iam",
+      "active-directory"
+    ]
+  },
+  {
+    "id": "d4-linux-groupdel",
+    "frente": "Qual comando do Linux remove um grupo do sistema?",
+    "verso": "groupdel.\nOs outros: groupadd cria, groupmod modifica o grupo (nome, GID) e gpasswd administra senha e membros do grupo.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: comando Linux para remover grupo.",
+    "tags": [
+      "linux",
+      "comandos"
+    ]
+  },
+  {
+    "id": "d4-linux-gpasswd",
+    "frente": "Qual comando do Linux administra a senha e os membros de um grupo?",
+    "verso": "gpasswd.\nNão confundir: groupmod ≠ gpasswd porque o groupmod modifica o próprio grupo (nome, GID), não seus membros ou senha.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: card de contraste dos comandos de grupo.",
+    "tags": [
+      "linux",
+      "comandos"
+    ]
+  },
+  {
+    "id": "d4-linux-usermod-lock",
+    "frente": "Um funcionário foi afastado e você precisa impedir o login dele no Linux sem apagar a conta. Qual comando usar?",
+    "verso": "usermod -L usuario (L maiúsculo = Lock).\nTrava a senha e impede o login.\nNão confundir: -l minúsculo muda o login name; -d muda o diretório home; -u muda o UID.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: usermod -L para desativar conta.",
+    "tags": [
+      "linux",
+      "comandos",
+      "iam"
+    ]
+  },
+  {
+    "id": "d3-vpn-site-to-site",
+    "frente": "A rede inteira da filial precisa se conectar de forma segura à rede inteira da matriz pela Internet. Qual tipo de VPN atende?",
+    "verso": "Site-to-site.\nConecta rede ↔ rede, com túnel permanente entre as localidades.\nNão confundir: federation compartilha identidades, não conecta redes.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2 / revisão: tipos de VPN; contraste com federation.",
+    "tags": [
+      "vpn",
+      "rede"
+    ]
+  },
+  {
+    "id": "d3-vpn-host-to-site",
+    "frente": "O notebook de um funcionário em casa precisa acessar a rede corporativa inteira. Qual tipo de VPN atende?",
+    "verso": "Host-to-site (remote access).\nUm host individual se conecta a uma rede inteira.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: host-to-host x host-to-site x site-to-site.",
+    "tags": [
+      "vpn",
+      "rede"
+    ]
+  },
+  {
+    "id": "d3-vpn-host-to-host",
+    "frente": "O notebook de um desenvolvedor precisa de uma conexão protegida apenas com um servidor Git específico. Qual tipo de VPN atende?",
+    "verso": "Host-to-host.\nUm host se conecta diretamente a outro host.\nHost-to-host responde \"quem conecta com quem\"; TLS/IPsec respondem \"como a comunicação é protegida\".",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: host-to-host x host-to-site x site-to-site.",
+    "tags": [
+      "vpn",
+      "rede"
+    ]
+  },
+  {
+    "id": "d3-l2tp-ipsec",
+    "frente": "Uma VPN usa L2TP para o túnel. O que é necessário para que o tráfego seja criptografado?",
+    "verso": "IPsec (L2TP/IPsec).\nL2TP e L2F não criptografam sozinhos.\nNão confundir: PPTP tem criptografia própria, mas fraca, e deve ser evitado.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 04/09: L2TP/L2F precisam de IPsec.",
+    "tags": [
+      "vpn",
+      "ipsec",
+      "protocolos"
+    ]
+  },
+  {
+    "id": "d3-screening-router",
+    "frente": "Um roteador na borda da rede também filtra o tráfego com ACLs, funcionando como um firewall básico. Como ele é chamado?",
+    "verso": "Screening router (roteador de triagem).\nNão confundir: screened host = firewall + bastion host; screened subnet = DMZ.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: screening router; confundi com screened host/dual-homed.",
+    "tags": [
+      "rede",
+      "firewall"
+    ]
+  },
+  {
+    "id": "d3-screened-host",
+    "frente": "Qual arquitetura de firewall combina um firewall (screening router) com um bastion host protegido por ele?",
+    "verso": "Screened host.\nNão confundir: screening router ≠ screened host porque o screening router é só o roteador com ACLs.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: contraste com screening router.",
+    "tags": [
+      "rede",
+      "firewall"
+    ]
+  },
+  {
+    "id": "d3-dual-homed-gateway",
+    "frente": "Um servidor com duas interfaces de rede, uma em cada rede, faz a separação entre elas. Como se chama essa arquitetura?",
+    "verso": "Dual-homed gateway (dual-homed host).\nDual = duas interfaces de rede.\nNão confundir: um firewall com 3 interfaces (Internet, DMZ e rede interna) é chamado de three-legged (triple-homed) firewall.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2 e 3: número de interfaces do dual-homed; anotações conflitantes (2 x 3).",
+    "tags": [
+      "rede",
+      "firewall"
+    ]
+  },
+  {
+    "id": "d3-screened-subnet",
+    "frente": "Onde devem ficar os servidores web, DNS e de email públicos para que, se forem comprometidos, a rede interna continue protegida?",
+    "verso": "Screened subnet (DMZ).\nRede intermediária entre a Internet e a rede interna, normalmente entre dois firewalls.\nNão confundir: intranet = rede interna; extranet = acesso para parceiros.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 3: DMZ / screened subnet.",
+    "tags": [
+      "rede",
+      "dmz"
+    ]
+  },
+  {
+    "id": "d3-extranet",
+    "frente": "A empresa quer oferecer a fornecedores parceiros um acesso controlado a parte da sua rede e sistemas. Como se chama essa rede?",
+    "verso": "Extranet.\nNão confundir: intranet é a rede interna; DMZ é a rede intermediária com os serviços públicos.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 3: intranet x extranet x DMZ.",
+    "tags": [
+      "rede"
+    ]
+  },
+  {
+    "id": "d3-inter-vlan-routing",
+    "frente": "Computadores na VLAN 10 (RH) e na VLAN 20 (Financeiro) precisam se comunicar, mas estão num switch de camada 2. O que é necessário?",
+    "verso": "Inter-VLAN routing.\nUm roteador ou switch layer 3 conecta VLANs diferentes; a VLAN apenas separa logicamente.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões: comunicação entre VLANs.",
+    "tags": [
+      "rede",
+      "vlan"
+    ]
+  },
+  {
+    "id": "d3-sdn-southbound",
+    "frente": "Numa SDN, qual API os dispositivos de rede (switches, roteadores) usam para se comunicar com o plano de controle?",
+    "verso": "Southbound API.\nO controle desce do SDN controller até o hardware.\nNão confundir: northbound ≠ southbound porque a northbound sobe do controlador para as aplicações e a orquestração.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Questões erradas: APIs do plano de controle; marquei northbound.",
+    "tags": [
+      "sdn",
+      "rede"
+    ]
+  },
+  {
+    "id": "d3-sdn-northbound",
+    "frente": "Numa SDN, qual API o controlador usa para se comunicar com as aplicações e sistemas de orquestração?",
+    "verso": "Northbound API.\nO controle sobe até as aplicações.\nSouthbound desce até os switches/roteadores.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Questões erradas: contraste northbound x southbound.",
+    "tags": [
+      "sdn",
+      "rede"
+    ]
+  },
+  {
+    "id": "d3-sd-wan",
+    "frente": "A empresa quer gerenciar e otimizar a conectividade WAN entre filiais, escolhendo caminhos por latência, perda de pacotes e disponibilidade. Qual solução?",
+    "verso": "SD-WAN.\nNão confundir: load balancer distribui requisições entre servidores; SASE combina rede + segurança na nuvem.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: SD-WAN x SASE x load balancer.",
+    "tags": [
+      "rede",
+      "sd-wan"
+    ]
+  },
+  {
+    "id": "d3-sase",
+    "frente": "Qual arquitetura combina conectividade de rede e serviços de segurança entregues a partir da nuvem?",
+    "verso": "SASE (Secure Access Service Edge).\nNão confundir: SD-WAN só otimiza os caminhos WAN; SASE junta rede + segurança.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: SD-WAN x SASE x load balancer.",
+    "tags": [
+      "rede",
+      "sase",
+      "nuvem"
+    ]
+  },
+  {
+    "id": "d3-fail-closed",
+    "frente": "Um firewall falha e passa a bloquear todo o tráfego, priorizando segurança sobre disponibilidade. Como se chama esse comportamento?",
+    "verso": "Fail-closed.\nFalhou, fecha.\nNão confundir: fail-open permite o tráfego na falha (prioriza disponibilidade). São comportamentos na falha, não tipos de balanceador.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: fail-open x fail-closed.",
+    "tags": [
+      "rede",
+      "resiliencia"
+    ]
+  },
+  {
+    "id": "d3-fail-open",
+    "frente": "Um dispositivo falha e passa a deixar todo o tráfego passar, para não derrubar o serviço. Como se chama esse comportamento?",
+    "verso": "Fail-open.\nFalhou, abre: prioriza disponibilidade sobre segurança.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: fail-open x fail-closed.",
+    "tags": [
+      "rede",
+      "resiliencia"
+    ]
+  },
+  {
+    "id": "d3-active-active",
+    "frente": "Dois balanceadores trabalham ao mesmo tempo, dividindo o tráfego entre si. Qual é essa configuração de alta disponibilidade?",
+    "verso": "Active-active.\nNão confundir: active-passive = um trabalha e o outro fica em standby para assumir na falha.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: active-active x active-passive.",
+    "tags": [
+      "resiliencia",
+      "alta-disponibilidade"
+    ]
+  },
+  {
+    "id": "d3-active-passive",
+    "frente": "Um firewall processa todo o tráfego enquanto um segundo fica em standby, só assumindo se o primeiro falhar. Qual é essa configuração?",
+    "verso": "Active-passive.\nNão confundir: active-active = os dois trabalham simultaneamente.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: active-active x active-passive.",
+    "tags": [
+      "resiliencia",
+      "alta-disponibilidade"
+    ]
+  },
+  {
+    "id": "d3-lb-least-connections",
+    "frente": "Qual algoritmo de balanceamento envia cada nova requisição para o servidor com menos conexões ativas?",
+    "verso": "Least connections.\nNão confundir: round robin distribui em sequência; weighted round robin considera o peso/capacidade de cada servidor.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: algoritmos de balanceamento.",
+    "tags": [
+      "rede",
+      "load-balancer"
+    ]
+  },
+  {
+    "id": "d3-lb-weighted-round-robin",
+    "frente": "Qual algoritmo de balanceamento distribui em sequência, mas manda mais requisições para os servidores com mais capacidade?",
+    "verso": "Weighted round robin.\nNão confundir: round robin simples trata todos os servidores igualmente.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: algoritmos de balanceamento.",
+    "tags": [
+      "rede",
+      "load-balancer"
+    ]
+  },
+  {
+    "id": "d3-transport-layer",
+    "frente": "Qual camada é responsável pela comunicação fim a fim, controle de fluxo, controle de erros e segmentação?",
+    "verso": "Transport layer (camada de transporte), com TCP e UDP.\nSe a questão fala em transmissão confiável ou fim a fim, é a camada de transporte.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: camada de transporte.",
+    "tags": [
+      "rede",
+      "osi"
+    ]
+  },
+  {
+    "id": "d3-udp",
+    "frente": "Qual protocolo de transporte, sem conexão e sem confirmação de entrega, é o mais indicado para voz e vídeo?",
+    "verso": "UDP.\nMais rápido, sem conexão e sem retransmissão.\nNão confundir: TCP é confiável, orientado à conexão e retransmite.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: TCP x UDP.",
+    "tags": [
+      "rede",
+      "protocolos"
+    ]
+  },
+  {
+    "id": "d3-fat-ap",
+    "frente": "Um access point tem todas as funcionalidades integradas e é configurado individualmente, sem depender de controlador. Qual tipo de AP?",
+    "verso": "Fat AP (autonomous AP).\nNão confundir: thin AP (lightweight) depende do WLC para configuração e gerenciamento.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: fat AP x thin AP.",
+    "tags": [
+      "wireless"
+    ]
+  },
+  {
+    "id": "d3-thin-ap",
+    "frente": "Os access points da empresa têm pouca inteligência e são configurados e gerenciados por um controlador central. Qual tipo de AP?",
+    "verso": "Thin AP (lightweight AP).\nDepende do WLC (wireless LAN controller).",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: fat AP x thin AP.",
+    "tags": [
+      "wireless"
+    ]
+  },
+  {
+    "id": "d4-captive-portal",
+    "frente": "Um hotel quer que os hóspedes vejam uma página de login e informem um voucher antes de liberar a Internet no Wi-Fi. Qual solução atende?",
+    "verso": "Captive portal.\nPágina web de autenticação que só libera o acesso após o login.\nNão confundir: PSK é só a senha do Wi-Fi; 802.1X é autenticação corporativa; MAC filtering é fácil de burlar.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: Wi-Fi de hotel com página de login.",
+    "tags": [
+      "wireless",
+      "autenticacao"
+    ]
+  },
+  {
+    "id": "d4-802-1x",
+    "frente": "A empresa quer autenticar cada usuário antes de liberar a porta do switch ou o acesso ao Wi-Fi corporativo. Qual padrão usar?",
+    "verso": "802.1X (port-based network access control).\nUsa EAP na autenticação e normalmente um servidor RADIUS.\nNão confundir: MAC filtering sozinho não é seguro.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: 802.1X / EAP / RADIUS.",
+    "tags": [
+      "nac",
+      "802.1x",
+      "autenticacao"
+    ]
+  },
+  {
+    "id": "d4-802-1x-authenticator",
+    "frente": "No 802.1X, qual é o papel do switch ou access point?",
+    "verso": "Authenticator.\nRepassa a autenticação entre o cliente e o servidor.\nOs outros: supplicant = cliente; authentication server = RADIUS.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: componentes do 802.1X.",
+    "tags": [
+      "nac",
+      "802.1x"
+    ]
+  },
+  {
+    "id": "d4-802-1x-supplicant",
+    "frente": "No 802.1X, como se chama o dispositivo cliente que pede acesso à rede?",
+    "verso": "Supplicant.\nOs outros: authenticator = switch/AP; authentication server = servidor RADIUS.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: componentes do 802.1X.",
+    "tags": [
+      "nac",
+      "802.1x"
+    ]
+  },
+  {
+    "id": "d4-eap",
+    "frente": "No 802.1X, qual protocolo carrega a troca de autenticação entre o cliente e o servidor RADIUS?",
+    "verso": "EAP (Extensible Authentication Protocol).\nRADIUS é o servidor que autentica; EAP é o protocolo usado durante a autenticação.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: 802.1X / EAP / RADIUS.",
+    "tags": [
+      "nac",
+      "eap",
+      "radius"
+    ]
+  },
+  {
+    "id": "d1-rfid-ativo",
+    "frente": "Qual tipo de RFID tem bateria própria, transmite seu próprio sinal e alcança distâncias maiores?",
+    "verso": "RFID ativo.\nNão confundir: RFID passivo não tem bateria, recebe energia do leitor e tem alcance menor; NFC é de curtíssimo alcance.",
+    "dominio": "1.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões: RFID de longo alcance.",
+    "tags": [
+      "rfid",
+      "seguranca-fisica"
+    ]
+  },
+  {
+    "id": "d2-deepfake",
+    "frente": "Circula um vídeo realista do CEO dizendo algo que nunca disse, gerado por IA. Como se chama esse tipo de conteúdo?",
+    "verso": "Deepfake.\nVídeo ou áudio falso extremamente realista criado com inteligência artificial.\nNão confundir: disinformation é qualquer informação falsa; deepfake é o conteúdo falso gerado por IA.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: deepfake; confundi com desinformação.",
+    "tags": [
+      "engenharia-social",
+      "ia"
+    ]
+  },
+  {
+    "id": "d2-engenharia-social-exploracao",
+    "frente": "Depois de pesquisar a vítima e ganhar sua confiança, o atacante a convence a abrir um anexo malicioso. Em qual fase da engenharia social isso acontece?",
+    "verso": "Exploração.\nFase em que o atacante leva a vítima a realizar a ação desejada (abrir anexo, clicar em link, informar senha).",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: fase da engenharia social.",
+    "tags": [
+      "engenharia-social",
+      "fases"
+    ]
+  },
+  {
+    "id": "d2-engenharia-social-apos-relacionamento",
+    "frente": "Nas fases da engenharia social, qual fase vem depois do desenvolvimento do relacionamento com a vítima?",
+    "verso": "Exploração.\nOrdem: pesquisa → desenvolvimento do relacionamento → exploração → execução.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: sequência das fases da engenharia social.",
+    "tags": [
+      "engenharia-social",
+      "fases"
+    ]
+  },
+  {
+    "id": "d2-ip-spoofing",
+    "frente": "Um pacote vindo da Internet chega ao firewall com endereço de origem 192.168.1.50, que é um IP interno. Qual é o ataque?",
+    "verso": "IP spoofing.\nO atacante falsificou o endereço de origem para parecer tráfego interno.\nNão confundir: sniffing captura tráfego; snooping espiona informações; spamming envia mensagens em massa.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões: IP interno vindo de fora.",
+    "tags": [
+      "ataques",
+      "spoofing"
+    ]
+  },
+  {
+    "id": "d2-dns-poisoning",
+    "frente": "Usuários de toda a rede são levados a IPs forjados ao acessar um site, porque os registros no servidor/cache DNS foram corrompidos. Qual é o ataque?",
+    "verso": "DNS poisoning.\nCorrupção da resolução DNS no servidor ou cache.\nNão confundir: não é só o cache local de um cliente.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 04/09: registros de IP divergentes/forjados.",
+    "tags": [
+      "ataques",
+      "dns"
+    ]
+  },
+  {
+    "id": "d2-fileless-malware",
+    "frente": "Um malware roda apenas na memória, usa PowerShell e outras ferramentas legítimas do sistema e não deixa arquivos maliciosos no disco. Qual é o tipo?",
+    "verso": "Fileless malware.\nDificulta a detecção por soluções tradicionais de endpoint.\nNão confundir: worm se espalha sozinho; RAT dá acesso remoto; ransomware criptografa e pede resgate.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões: fileless malware.",
+    "tags": [
+      "malware"
+    ]
+  },
+  {
+    "id": "d2-vba-macro-malware",
+    "frente": "Um documento do Word traz um código que, ao ser habilitado, abre um shell no Windows. Que tipo de ataque é esse?",
+    "verso": "Macro virus (macro malware) em VBA.\nVBA roda em documentos do Office e pode executar código e comandos no sistema.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Erros de simulado: uso malicioso do VBA.",
+    "tags": [
+      "malware",
+      "macro"
+    ]
+  },
+  {
+    "id": "d2-motivacao-espionagem",
+    "frente": "Uma entidade bem financiada conduz uma campanha sofisticada e sistemática para enfraquecer estrategicamente o alvo, que acaba tendo perdas financeiras. Qual é a motivação?",
+    "verso": "Espionagem.\nPistas: sofisticado + bem financiado + objetivo estratégico.\nNão confundir: a vítima perder dinheiro não significa que a motivação era financeira.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões: motivação do atacante; marquei financeira.",
+    "tags": [
+      "threat-actors",
+      "motivacao"
+    ]
+  },
+  {
+    "id": "d2-msp-supply-chain",
+    "frente": "Um atacante compromete a conta de um funcionário do provedor terceirizado (MSP) que administra a TI da empresa e a usa para invadir a empresa. Qual é o vetor?",
+    "verso": "Supply chain (third-party risk).\nO MSP é um terceiro com acesso à infraestrutura; se ele for comprometido, o cliente também fica exposto.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: MSP e supply chain.",
+    "tags": [
+      "supply-chain",
+      "terceiros",
+      "msp"
+    ]
+  },
+  {
+    "id": "d2-password-reuse",
+    "frente": "Um usuário usa a mesma senha no email pessoal, no banco e na VPN da empresa. Qual é o nome desse comportamento de risco?",
+    "verso": "Password reuse.\nSe a senha vazar em um serviço, o atacante tenta a mesma senha nos outros.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: password reuse.",
+    "tags": [
+      "senhas",
+      "credenciais"
+    ]
+  },
+  {
+    "id": "d2-credential-stuffing",
+    "frente": "O atacante pega usuário e senha vazados de um site e testa esses mesmos pares em vários outros serviços. Qual é o ataque?",
+    "verso": "Credential stuffing.\nNão confundir: password spraying tenta uma senha comum contra muitas contas.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: credential stuffing x spraying.",
+    "tags": [
+      "senhas",
+      "ataques"
+    ]
+  },
+  {
+    "id": "d2-password-spraying",
+    "frente": "O atacante tenta a senha \"Verao2026!\" em centenas de contas diferentes, uma tentativa por conta. Qual é o ataque?",
+    "verso": "Password spraying.\nUma senha comum contra muitas contas, para evitar bloqueio por tentativas.\nNão confundir: credential stuffing usa pares usuário/senha vazados.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: credential stuffing x spraying.",
+    "tags": [
+      "senhas",
+      "ataques"
+    ]
+  },
+  {
+    "id": "d2-sql-injection",
+    "frente": "Um atacante coloca ' OR 1=1 -- num campo de login para manipular a consulta ao banco de dados. Qual é o ataque?",
+    "verso": "SQL injection.\nAlvo: o banco de dados / as consultas SQL.\nNão confundir: XSS injeta script que roda no navegador da vítima.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo: SQL injection x XSS.",
+    "tags": [
+      "ataques",
+      "aplicacao"
+    ]
+  },
+  {
+    "id": "d2-xss",
+    "frente": "Um atacante coloca um <script> num comentário do site, e o código roda no navegador de quem abre a página. Qual é o ataque?",
+    "verso": "XSS (Cross-site scripting).\nAlvo: o navegador / JavaScript do usuário.\nNão confundir: SQL injection ataca o banco de dados.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo: SQL injection x XSS.",
+    "tags": [
+      "ataques",
+      "aplicacao"
+    ]
+  },
+  {
+    "id": "d2-legacy-vs-eol",
+    "frente": "Um sistema antigo, com problemas conhecidos, continua em uso na empresa. Como se chama essa tecnologia?",
+    "verso": "Legacy.\nNão confundir: EOL (end of life) ≠ legacy porque EOL significa que o fabricante parou o suporte.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo: legacy x EOL.",
+    "tags": [
+      "vulnerabilidades"
+    ]
+  },
+  {
+    "id": "d2-hardening",
+    "frente": "Um administrador fecha portas desnecessárias, remove serviços não usados, atualiza o sistema e configura o firewall de um servidor. Como se chama esse processo?",
+    "verso": "Hardening.\nFortalece o sistema reduzindo sua attack surface.",
+    "dominio": "2.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: hardening.",
+    "tags": [
+      "hardening",
+      "mitigacao"
+    ]
+  },
+  {
+    "id": "d4-vulnerability-management",
+    "frente": "Qual processo contínuo envolve identificar, avaliar, priorizar, corrigir e validar vulnerabilidades com um novo scan?",
+    "verso": "Vulnerability management.\nNão é só escanear: o scan é apenas uma etapa do processo.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: vulnerability management.",
+    "tags": [
+      "vulnerabilidades"
+    ]
+  },
+  {
+    "id": "d4-vulnerability-scanner",
+    "frente": "Um scanner como Nessus ou OpenVAS encontrou patches ausentes em switches, firewalls e servidores. Ele também corrige as falhas?",
+    "verso": "Não. O vulnerability scanner identifica, não corrige.\nAnalisa servidores, switches, firewalls, roteadores, estações e aplicações, não só servidores. Também pode identificar serviços em execução.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: escopo do scanner de vulnerabilidades.",
+    "tags": [
+      "vulnerabilidades",
+      "ferramentas"
+    ]
+  },
+  {
+    "id": "d4-package-monitoring",
+    "frente": "A equipe quer ser alertada quando uma biblioteca npm, pip ou Maven usada pela aplicação tiver uma vulnerabilidade. Qual prática atende?",
+    "verso": "Package monitoring.\nMonitora bibliotecas, dependências, frameworks e componentes open source de terceiros.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: package monitoring.",
+    "tags": [
+      "vulnerabilidades",
+      "aplicacao"
+    ]
+  },
+  {
+    "id": "d4-credentialed-scan",
+    "frente": "Qual tipo de scan de vulnerabilidade faz login nos sistemas para analisá-los por dentro, sendo mais completo e com menos falsos positivos?",
+    "verso": "Credentialed scan.\nNão confundir: non-credentialed simula um atacante externo e só vê os serviços expostos.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão / 04/09: scan com x sem credenciais.",
+    "tags": [
+      "vulnerabilidades",
+      "scan"
+    ]
+  },
+  {
+    "id": "d4-non-credentialed-scan",
+    "frente": "A empresa quer ver o perímetro como um atacante externo veria, sem acesso interno. Qual tipo de scan usar?",
+    "verso": "Non-credentialed scan.\nSimula o atacante externo e analisa só os serviços expostos.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 04/09: cenário de perímetro; scan sem credenciais.",
+    "tags": [
+      "vulnerabilidades",
+      "scan"
+    ]
+  },
+  {
+    "id": "d4-remediation",
+    "frente": "Após o scan, a equipe aplica patches, corrige configurações e desativa serviços inseguros. Como se chama essa etapa?",
+    "verso": "Remediation (remediação).\nCorrigir ou reduzir a vulnerabilidade.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: remediação.",
+    "tags": [
+      "vulnerabilidades"
+    ]
+  },
+  {
+    "id": "d4-wireshark",
+    "frente": "Qual ferramenta captura e analisa pacotes, mostrando origem, destino, portas e protocolos do tráfego?",
+    "verso": "Wireshark (protocol analyzer).\nNão confundir: Nmap descobre hosts e portas; Nessus procura vulnerabilidades.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: Wireshark x Nmap x Nessus x OVAL.",
+    "tags": [
+      "ferramentas",
+      "rede"
+    ]
+  },
+  {
+    "id": "d4-nmap",
+    "frente": "Qual ferramenta descobre hosts, portas abertas e serviços na rede?",
+    "verso": "Nmap (port scanner).\nNão confundir: Wireshark analisa pacotes; Nessus procura vulnerabilidades.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: Wireshark x Nmap x Nessus x OVAL.",
+    "tags": [
+      "ferramentas",
+      "rede"
+    ]
+  },
+  {
+    "id": "d4-oval",
+    "frente": "Qual padrão avalia configurações e vulnerabilidades usando definições padronizadas?",
+    "verso": "OVAL (Open Vulnerability and Assessment Language).\nNão confundir: Nessus é o scanner; OVAL é a linguagem/definições padronizadas de avaliação.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: OVAL.",
+    "tags": [
+      "ferramentas",
+      "vulnerabilidades"
+    ]
+  },
+  {
+    "id": "d4-network-mapper",
+    "frente": "Qual ferramenta descobre os dispositivos da rede e desenha a topologia?",
+    "verso": "Network mapper.\nNão confundir: port scanner procura portas; protocol analyzer analisa pacotes; vulnerability scanner procura vulnerabilidades.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: ferramentas de rede.",
+    "tags": [
+      "ferramentas",
+      "rede"
+    ]
+  },
+  {
+    "id": "d4-osint",
+    "frente": "Um analista coleta informações sobre a empresa-alvo no Google, LinkedIn, GitHub, redes sociais, DNS e WHOIS. Qual técnica?",
+    "verso": "OSINT (Open Source Intelligence).\nColeta em fontes públicas.\nNão confundir: dumpster diving é vasculhar o lixo; packet analysis é capturar tráfego.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: OSINT.",
+    "tags": [
+      "osint",
+      "reconhecimento"
+    ]
+  },
+  {
+    "id": "d4-threat-intel-reputacao",
+    "frente": "Um feed de threat intelligence indica se um IP, domínio ou hash é confiável ou malicioso. Que tipo de informação é essa?",
+    "verso": "Reputação.\nNão confundir: comportamento descreve como o atacante age; dados de ameaça são os indicadores em si (IPs, hashes, domínios).",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo: threat intelligence.",
+    "tags": [
+      "threat-intel"
+    ]
+  },
+  {
+    "id": "d4-siem-normalization",
+    "frente": "Logs chegam ao SIEM em formatos diferentes (Windows, Linux, firewall, IDS). Qual função os padroniza para facilitar as pesquisas?",
+    "verso": "Log normalization.\nConverte logs de fontes diferentes para um formato padrão.\nNão confundir: correlation relaciona eventos diferentes para identificar um ataque.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: SIEM; anotação dizia correlation para \"padronizar dados\" (corrigido para normalization).",
+    "tags": [
+      "siem",
+      "logs"
+    ]
+  },
+  {
+    "id": "d4-siem-correlation",
+    "frente": "O SIEM junta um alerta do firewall, um do IDS e um login suspeito no AD e conclui que é um único ataque. Qual função fez isso?",
+    "verso": "Correlation (correlation engine).\nRelaciona eventos diferentes para identificar ataques.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: SIEM correlation.",
+    "tags": [
+      "siem",
+      "logs"
+    ]
+  },
+  {
+    "id": "d4-siem-sensors",
+    "frente": "Qual componente do SIEM fica nos endpoints capturando logs e eventos em tempo real para alimentar o SIEM?",
+    "verso": "Sensores (agentes/coletores).\nNão confundir: dashboards e tendências só visualizam e analisam dados já coletados.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: componentes do SIEM; marquei dashboard/tendência.",
+    "tags": [
+      "siem",
+      "endpoint"
+    ]
+  },
+  {
+    "id": "d4-soar",
+    "frente": "Qual solução centraliza dados de várias ferramentas de segurança e automatiza respostas, como bloquear um IP logo após a detecção?",
+    "verso": "SOAR (Security Orchestration, Automation and Response).\nNão confundir: MDM gerencia dispositivos móveis; MAM gerencia apps; GDPR é lei, não ferramenta.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: SOAR.",
+    "tags": [
+      "soar",
+      "automacao"
+    ]
+  },
+  {
+    "id": "d4-dns-sinkhole-limitacao",
+    "frente": "A empresa usa DNS sinkhole, mas um malware continua se comunicando com o C2. Qual é a explicação provável?",
+    "verso": "O malware não usa o DNS da empresa.\nEle usa um DNS público próprio (hardcoded) ou IP direto, então a consulta nunca passa pelo sinkhole.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: limitação do DNS sinkhole.",
+    "tags": [
+      "dns",
+      "sinkhole"
+    ]
+  },
+  {
+    "id": "d4-dlp-rede",
+    "frente": "Qual tipo de DLP analisa o tráfego que passa pela rede em busca de SSNs, documentos financeiros e palavras-chave de propriedade intelectual?",
+    "verso": "Network DLP (DLP de rede).\nNão confundir: endpoint DLP monitora o dispositivo (USB, impressão, cópia local); cloud DLP foca em serviços de nuvem.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: tipos de DLP.",
+    "tags": [
+      "dlp",
+      "dados"
+    ]
+  },
+  {
+    "id": "d4-dlp-endpoint",
+    "frente": "Qual tipo de DLP impede que um usuário copie dados sensíveis para um pendrive ou os imprima?",
+    "verso": "Endpoint DLP.\nMonitora o dispositivo: USB, impressão, cópia local.\nNão confundir: network DLP analisa o tráfego da rede.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: tipos de DLP.",
+    "tags": [
+      "dlp",
+      "endpoint"
+    ]
+  },
+  {
+    "id": "d4-mdm",
+    "frente": "Qual solução gerencia apenas dispositivos móveis, com configuração de Wi-Fi, bloqueio e apagamento remoto?",
+    "verso": "MDM (Mobile Device Management).\nEscala: MDM < EMM < UEM.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 3: MDM x EMM x UEM.",
+    "tags": [
+      "mobile",
+      "mdm"
+    ]
+  },
+  {
+    "id": "d4-emm",
+    "frente": "Qual solução gerencia dispositivos móveis de várias marcas e também os aplicativos, conteúdos e políticas corporativas?",
+    "verso": "EMM (Enterprise Mobility Management).\nNão confundir: MDM gerencia só o dispositivo; UEM gerencia todos os endpoints.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 3: MDM x EMM x UEM.",
+    "tags": [
+      "mobile",
+      "emm"
+    ]
+  },
+  {
+    "id": "d4-uem",
+    "frente": "A empresa quer uma única solução para gerenciar celulares, tablets, notebooks, desktops e IoT. Qual?",
+    "verso": "UEM (Unified Endpoint Management).\nGerencia todos os endpoints. Escala: MDM < EMM < UEM.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 3: MDM x EMM x UEM.",
+    "tags": [
+      "endpoint",
+      "uem"
+    ]
+  },
+  {
+    "id": "d4-intune-windows-server",
+    "frente": "Entre Windows 10, iOS, Android e Windows Server, qual o Microsoft Intune NÃO tem como alvo de gerenciamento?",
+    "verso": "Windows Server.\nIntune é gerenciamento de endpoints / dispositivos de usuário.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Erros de simulado: Intune.",
+    "tags": [
+      "endpoint",
+      "intune"
+    ]
+  },
+  {
+    "id": "d4-gestao-remota-vs-byod",
+    "frente": "Um funcionário que usa o celular pessoal no trabalho foi desligado, e a empresa precisa apagar remotamente os apps e dados corporativos. Qual recurso usar?",
+    "verso": "Gestão remota (remote management / remote wipe do MDM).\nNão confundir: BYOD é a política que permite o dispositivo pessoal, não é ação nem ferramenta.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: gestão remota x BYOD.",
+    "tags": [
+      "mobile",
+      "mdm",
+      "byod"
+    ]
+  },
+  {
+    "id": "d4-allowlist-vs-acl",
+    "frente": "A empresa quer garantir que só Chrome, Word e PowerShell possam executar nos computadores. Qual controle usar?",
+    "verso": "Application allowlist.\nControla quais aplicações podem executar.\nNão confundir: ACL controla quem pode acessar o quê.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões: allowlist x ACL.",
+    "tags": [
+      "allowlist",
+      "endpoint"
+    ]
+  },
+  {
+    "id": "d4-allowlist-modo-flag",
+    "frente": "Antes de ativar uma application allowlist em produção, em qual modo ela deve rodar para só registrar, sem bloquear nada?",
+    "verso": "Flag (modo de monitoramento).\nGera logs sem bloquear; depois da análise, troca para Block.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: allowlist flag x block.",
+    "tags": [
+      "allowlist",
+      "endpoint"
+    ]
+  },
+  {
+    "id": "d4-configuration-baseline",
+    "frente": "A empresa define um conjunto padrão de configurações, serviços e políticas de segurança que todos os servidores devem seguir. Como se chama?",
+    "verso": "Configuration baseline.\nServe para padronização, auditoria, hardening e detecção de alterações.\nNão confundir: performance baseline mede CPU, memória, disco e rede.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: configuration x performance baseline.",
+    "tags": [
+      "baseline",
+      "hardening"
+    ]
+  },
+  {
+    "id": "d4-performance-baseline",
+    "frente": "Qual baseline registra o uso normal de CPU, memória, disco e rede para depois detectar comportamentos anormais?",
+    "verso": "Performance baseline.\nSão estatísticas de desempenho.\nNão confundir: configuration baseline define configurações.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: configuration x performance baseline.",
+    "tags": [
+      "baseline",
+      "monitoramento"
+    ]
+  },
+  {
+    "id": "d4-application-hardening-excecoes",
+    "frente": "Uma aplicação complexa precisa de comportamentos específicos que a política padrão de hardening bloquearia. O que configurar?",
+    "verso": "Regras de exceção.\nLiberam só os comportamentos necessários, mantendo o resto do hardening.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo: application hardening.",
+    "tags": [
+      "hardening",
+      "aplicacao"
+    ]
+  },
+  {
+    "id": "d4-browser-vm-sandbox",
+    "frente": "Um sistema com dados confidenciais precisa navegar na Internet, e existe preocupação com malware e spyware. Qual é a melhor proteção?",
+    "verso": "Navegar dentro de uma VM / sandbox.\nO isolamento protege o sistema real se o navegador for comprometido.\nNão confundir: bloquear cookies e o protected mode só reduzem riscos, não isolam.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: navegador em ambiente virtual.",
+    "tags": [
+      "sandbox",
+      "endpoint"
+    ]
+  },
+  {
+    "id": "d4-error-handling",
+    "frente": "Como uma aplicação deve tratar um erro inesperado com segurança?",
+    "verso": "Com um handler genérico (catch-all).\nLoga os detalhes internamente e nunca expõe informações técnicas ao usuário.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 04/09: tratamento de erros.",
+    "tags": [
+      "aplicacao",
+      "secure-coding"
+    ]
+  },
+  {
+    "id": "d4-secure-cookies",
+    "frente": "Numa aplicação web, qual controle protege especificamente a sessão do usuário?",
+    "verso": "Cookies seguros (Secure/HttpOnly).\nNão confundir: SSL/TLS protege os dados em trânsito; validação de entrada evita injeções.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo: segurança web; a resposta não era validação de entrada.",
+    "tags": [
+      "aplicacao",
+      "web",
+      "sessao"
+    ]
+  },
+  {
+    "id": "d4-fuzzing",
+    "frente": "Qual técnica de teste envia entradas inesperadas, inválidas ou malformadas para um software para encontrar falhas?",
+    "verso": "Fuzzing.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: fuzzing.",
+    "tags": [
+      "aplicacao",
+      "testes"
+    ]
+  },
+  {
+    "id": "d4-fuzzing-generation",
+    "frente": "Qual tipo de fuzzing cria novos dados de teste com base em um modelo/estrutura da entrada?",
+    "verso": "Generation-based fuzzing.\nGera entradas novas a partir do modelo.\nNão confundir: mutation-based modifica uma entrada que já existe.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: mutation x generation fuzzing.",
+    "tags": [
+      "aplicacao",
+      "testes"
+    ]
+  },
+  {
+    "id": "d4-fuzzing-mutation",
+    "frente": "Qual tipo de fuzzing pega uma entrada válida existente e a modifica para gerar os testes?",
+    "verso": "Mutation-based fuzzing.\nNão confundir: generation-based cria entradas novas a partir de um modelo.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: mutation x generation fuzzing.",
+    "tags": [
+      "aplicacao",
+      "testes"
+    ]
+  },
+  {
+    "id": "d4-waterfall-requisitos",
+    "frente": "Qual é o primeiro passo do modelo de desenvolvimento waterfall (cascata)?",
+    "verso": "Requisitos.\nDefine o que o sistema precisa fazer.\nDepois: projeto (como) → implementação → testes → implantação → manutenção.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Erros de simulado: primeira etapa do waterfall.",
+    "tags": [
+      "sdlc",
+      "aplicacao"
+    ]
+  },
+  {
+    "id": "d4-scp-sftp",
+    "frente": "Qual é a forma segura de transferir arquivos entre hosts, em vez de FTP?",
+    "verso": "SCP ou SFTP.\nOs dois rodam sobre SSH e criptografam dados e autenticação.\nNão confundir: FTP transmite tudo em texto claro, inclusive a senha.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Questões erradas: transferência segura; marquei FTP.",
+    "tags": [
+      "protocolos",
+      "ssh"
+    ]
+  },
+  {
+    "id": "d4-data-inventory",
+    "frente": "Para atender a LGPD/GDPR, a empresa precisa saber quais dados trata, onde estão, quem acessa e como estão classificados. Qual registro atende?",
+    "verso": "Data inventory (inventário de dados).\nRegistro de todos os dados tratados: o que existe, onde fica, quem acessa, classificação e proteção.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: inventário de dados.",
+    "tags": [
+      "dados",
+      "privacidade"
+    ]
+  },
+  {
+    "id": "d4-decommissioning",
+    "frente": "Um servidor sumiu do inventário. Antes de tratá-lo como perdido ou roubado, o que verificar?",
+    "verso": "Os registros de decommissioning (desativação).\nMostram data, motivo, responsável, destino do equipamento e atualização do inventário.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: equipamento ausente no inventário.",
+    "tags": [
+      "ativos",
+      "inventario"
+    ]
+  },
+  {
+    "id": "d4-sanitization-purge",
+    "frente": "Qual nível de sanitização de mídia usa técnicas avançadas como secure erase, cryptographic erase ou degaussing?",
+    "verso": "Purge.\nNão confundir: clear é a limpeza básica; destroy é a destruição física (triturar, incinerar, esmagar).",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: clear x purge x destroy.",
+    "tags": [
+      "dados",
+      "sanitizacao"
+    ]
+  },
+  {
+    "id": "d4-sanitization-destroy",
+    "frente": "Qual método de sanitização tritura, incinera ou esmaga a mídia?",
+    "verso": "Destroy (destruição física).\nNão confundir: purge limpa com técnicas avançadas sem destruir a mídia.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: clear x purge x destroy.",
+    "tags": [
+      "dados",
+      "sanitizacao"
+    ]
+  },
+  {
+    "id": "d4-degaussing",
+    "frente": "Entre os métodos de sanitização, por que degaussing é considerado o menos confiável?",
+    "verso": "Porque só funciona em mídia magnética (HD e fitas).\nNão apaga SSD, pendrive nem CD/DVD.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: método menos confiável = degaussing.",
+    "tags": [
+      "dados",
+      "sanitizacao"
+    ]
+  },
+  {
+    "id": "d3-dados-em-uso",
+    "frente": "Dados sensíveis estão sendo processados na RAM, onde a criptografia não impede o acesso. Qual é a melhor proteção?",
+    "verso": "Restrições de permissão / controle de acesso (least privilege).\nNão confundir: dados em repouso (disco) → criptografia; dados em uso (RAM) → permissões.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 3: proteção de dados em uso.",
+    "tags": [
+      "dados",
+      "estados-dos-dados"
+    ]
+  },
+  {
+    "id": "d3-efs-smb-transito",
+    "frente": "Um arquivo criptografado com EFS é copiado para outro servidor via SMB. Ele continua protegido pela criptografia do EFS durante a transferência?",
+    "verso": "Não.\nO EFS descriptografa para o transporte e recriptografa no destino.\nCriptografia at-rest (disco) ≠ criptografia in-transit (rede).",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 04/09: EFS via SMB.",
+    "tags": [
+      "dados",
+      "criptografia"
+    ]
+  },
+  {
+    "id": "d3-human-readable",
+    "frente": "Um infográfico foi feito para ser facilmente compreendido por pessoas. Como esse tipo de dado é classificado?",
+    "verso": "Human-readable data.\nNão confundir: dados regulamentados estão sujeitos a leis; dados confidenciais precisam de proteção, independente do formato.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: dado legível por humanos.",
+    "tags": [
+      "dados",
+      "classificacao"
+    ]
+  },
+  {
+    "id": "d1-one-time-pad",
+    "frente": "Qual cifra oferece sigilo perfeito, usando uma chave simétrica aleatória do mesmo tamanho dos dados, usada uma única vez?",
+    "verso": "One-time pad (OTP).\nMatematicamente impossível de quebrar se a chave nunca for reutilizada.\nNão confundir: one-time password é o código de autenticação (SMS/app) com a mesma sigla.",
+    "dominio": "1.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: OTP one-time pad; confundi com one-time password.",
+    "tags": [
+      "criptografia",
+      "otp"
+    ]
+  },
+  {
+    "id": "d1-homomorphic-encryption",
+    "frente": "Qual tipo de criptografia permite processar e fazer cálculos sobre dados sem descriptografá-los?",
+    "verso": "Homomorphic encryption.\nNão confundir: one-time pad é sobre sigilo perfeito com chave de uso único.",
+    "dominio": "1.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: distrator da questão de OTP.",
+    "tags": [
+      "criptografia"
+    ]
+  },
+  {
+    "id": "d1-validacao-certificado",
+    "frente": "Ao validar o certificado TLS de um site, o que o navegador usa para verificar a assinatura da CA no certificado?",
+    "verso": "A chave pública da CA.\nA CA assina com a chave privada; o navegador valida com a chave pública (da CA raiz confiável instalada no sistema).",
+    "dominio": "1.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: validação de certificado.",
+    "tags": [
+      "pki",
+      "certificados"
+    ]
+  },
+  {
+    "id": "d1-certificado-san",
+    "frente": "Um único certificado precisa proteger xyz.com, abc.net e def.org. Qual tipo de certificado usar?",
+    "verso": "SAN (Subject Alternative Name).\nVários nomes/domínios diferentes no mesmo certificado.\nNão confundir: wildcard (*.xyz.com) cobre só subdomínios do mesmo domínio.",
+    "dominio": "1.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: SAN x wildcard.",
+    "tags": [
+      "pki",
+      "certificados"
+    ]
+  },
+  {
+    "id": "d1-certificado-wildcard",
+    "frente": "Um único certificado precisa proteger www.xyz.com, mail.xyz.com e vpn.xyz.com. Qual é a solução mais simples?",
+    "verso": "Wildcard (*.xyz.com).\nCobre os subdomínios de um mesmo domínio.\nNão confundir: SAN é para domínios diferentes (xyz.com, abc.net).",
+    "dominio": "1.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: SAN x wildcard.",
+    "tags": [
+      "pki",
+      "certificados"
+    ]
+  },
+  {
+    "id": "d1-ctr-mode",
+    "frente": "Qual modo de operação de cifra de bloco usa um nonce + contador para gerar o keystream, que é combinado com XOR aos dados?",
+    "verso": "CTR (Counter mode).\nNão confundir: ECB = cada bloco independente; CBC = IV + encadeia o bloco anterior; CFB = feedback.",
+    "dominio": "1.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões: cifra de bloco / CTR.",
+    "tags": [
+      "criptografia",
+      "aes"
+    ]
+  },
+  {
+    "id": "d1-cbc-mode",
+    "frente": "Qual modo de cifra de bloco usa um IV e encadeia cada bloco com o bloco cifrado anterior?",
+    "verso": "CBC (Cipher Block Chaining).\nNão confundir: CTR usa nonce + contador; ECB cifra cada bloco de forma independente.",
+    "dominio": "1.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões: modos de operação.",
+    "tags": [
+      "criptografia",
+      "aes"
+    ]
+  },
+  {
+    "id": "d1-ecb-mode",
+    "frente": "Qual modo de cifra de bloco cifra cada bloco de forma independente, sem IV nem encadeamento?",
+    "verso": "ECB (Electronic Codebook).\nBlocos iguais geram saídas iguais, então é o modo mais fraco.",
+    "dominio": "1.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões: modos de operação.",
+    "tags": [
+      "criptografia",
+      "aes"
+    ]
+  },
+  {
+    "id": "d3-fpga",
+    "frente": "Qual hardware vem \"em branco\" de fábrica e é configurado depois pelo cliente com linguagem de descrição de hardware (VHDL/Verilog)?",
+    "verso": "FPGA (Field Programmable Gate Array).\nReconfigurável em campo.\nNão confundir: SoC vem integrado e fixo de fábrica.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: FPGA x SoC x RTOS x MFD.",
+    "tags": [
+      "embarcados",
+      "hardware"
+    ]
+  },
+  {
+    "id": "d3-soc",
+    "frente": "Um Raspberry Pi usa um único chip que reúne CPU, GPU, controladores e interfaces. Como se chama esse componente?",
+    "verso": "SoC (System on a Chip).\nIntegrado e fixo de fábrica.\nNão confundir: FPGA é reconfigurável; SCADA é controle industrial; RTOS é sistema operacional.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões / lote grande: Raspberry Pi → SoC.",
+    "tags": [
+      "embarcados",
+      "hardware"
+    ]
+  },
+  {
+    "id": "d3-rtos",
+    "frente": "Qual é o tipo de sistema operacional usado quando o processamento precisa responder dentro de prazos rígidos?",
+    "verso": "RTOS (Real-Time Operating System).\nNão é hardware.\nNão confundir: MFD é dispositivo multifuncional (impressora/scanner).",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: FPGA x SoC x RTOS x MFD.",
+    "tags": [
+      "embarcados"
+    ]
+  },
+  {
+    "id": "d3-backups-recuperacao-desastre",
+    "frente": "Qual controle é o mais importante para conseguir recuperar os dados de uma empresa após um desastre?",
+    "verso": "Backups atualizados.\nPermitem recuperar arquivos, manter a continuidade e voltar de ransomware ou falhas.\nNão confundir: platform diversity reduz a dependência de fornecedores, mas não substitui backups.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: controle para recuperar dados; confundi com diversidade de plataformas.",
+    "tags": [
+      "backup",
+      "resiliencia"
+    ]
+  },
+  {
+    "id": "d3-hot-site",
+    "frente": "Qual site de recuperação está totalmente operacional, com servidores funcionando e dados sincronizados, recuperando em minutos?",
+    "verso": "Hot site.\nÉ o mais caro.\nNão confundir: hot spare é um equipamento redundante, não um local.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão / lote grande: sites de recuperação.",
+    "tags": [
+      "resiliencia",
+      "dr"
+    ]
+  },
+  {
+    "id": "d3-warm-site",
+    "frente": "Qual site de recuperação tem infraestrutura parcialmente pronta, com alguns equipamentos instalados, e recupera em horas?",
+    "verso": "Warm site.\nMeio-termo entre hot e cold.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: sites de recuperação.",
+    "tags": [
+      "resiliencia",
+      "dr"
+    ]
+  },
+  {
+    "id": "d3-cold-site",
+    "frente": "Qual site de recuperação tem só o espaço físico e energia, com equipamentos instalados após o desastre (dias ou semanas)?",
+    "verso": "Cold site.\nÉ o mais barato e o mais demorado.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: sites de recuperação.",
+    "tags": [
+      "resiliencia",
+      "dr"
+    ]
+  },
+  {
+    "id": "d3-hot-spare",
+    "frente": "Um firewall secundário fica ligado e pronto para assumir imediatamente se o principal falhar. Como se chama?",
+    "verso": "Hot spare.\nÉ um equipamento redundante.\nNão confundir: hot site é um local alternativo inteiro.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: hot site x hot spare.",
+    "tags": [
+      "resiliencia",
+      "redundancia"
+    ]
+  },
+  {
+    "id": "d3-reciprocal-agreement",
+    "frente": "Com orçamento restrito, duas organizações combinam compartilhar sua infraestrutura de recuperação entre si. Qual estratégia é essa?",
+    "verso": "Reciprocal agreement (site cooperativo).\nDivide o custo da recuperação.\nPista da questão: \"restrições orçamentárias\".",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Lote grande: estratégia de continuidade com orçamento restrito.",
+    "tags": [
+      "resiliencia",
+      "dr"
+    ]
+  },
+  {
+    "id": "d3-ups",
+    "frente": "Numa queda de energia, qual equipamento mantém os servidores ligados imediatamente, por curto prazo, usando bateria?",
+    "verso": "UPS.\nSegura a queda até o gerador assumir.\nNão confundir: gerador segura a duração; PDU só distribui energia.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões: gerador + UPS + PDU.",
+    "tags": [
+      "resiliencia",
+      "energia"
+    ]
+  },
+  {
+    "id": "d3-gerador",
+    "frente": "Qual equipamento fornece energia por horas durante uma queda prolongada, assumindo depois do UPS?",
+    "verso": "Gerador.\nSequência: queda → UPS segura → gerador liga → PDU distribui.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões: gerador + UPS + PDU.",
+    "tags": [
+      "resiliencia",
+      "energia"
+    ]
+  },
+  {
+    "id": "d3-pdu",
+    "frente": "Qual equipamento distribui a energia para os equipamentos do rack, sem produzir energia?",
+    "verso": "PDU (Power Distribution Unit).\nNão confundir: UPS e gerador fornecem energia.",
+    "dominio": "3.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo questões: gerador + UPS + PDU.",
+    "tags": [
+      "resiliencia",
+      "energia"
+    ]
+  },
+  {
+    "id": "d4-data-breach-escalar",
+    "frente": "O CISO descobre uma violação de dados significativa que pode ter exposto informações confidenciais. Qual deve ser a primeira ação?",
+    "verso": "Escalar interna e externamente, envolvendo especialistas na investigação.\nDepois: investigar, conter, determinar o impacto e só então notificar.\nNão confundir: notificar clientes vem depois de entender o que foi exposto.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Erros de simulado: data breach; marquei notificar clientes.",
+    "tags": [
+      "incident-response"
+    ]
+  },
+  {
+    "id": "d4-chain-of-custody",
+    "frente": "Qual é a finalidade da cadeia de custódia numa investigação?",
+    "verso": "Identificar os indivíduos que controlaram as provas.\nRegistra quem coletou, recebeu e teve acesso, quando houve transferências e onde a evidência ficou.",
+    "dominio": "4.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Erros de simulado: cadeia de custódia; marquei preservar integridade.",
+    "tags": [
+      "forense",
+      "evidencias"
+    ]
+  },
+  {
+    "id": "d5-kri",
+    "frente": "Qual métrica alerta que um risco está aumentando, antes de um limite ser atingido (ex.: número de incidentes, vulnerabilidades críticas)?",
+    "verso": "KRI (Key Risk Indicator).\nMede o risco e apoia decisões.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2 / revisão: KRI.",
+    "tags": [
+      "gestao-de-risco",
+      "kri"
+    ]
+  },
+  {
+    "id": "d5-risk-appetite",
+    "frente": "Qual termo estratégico define quanto risco a empresa deseja assumir para atingir seus objetivos?",
+    "verso": "Risk appetite.\nNão confundir: risk tolerance = quanto risco consegue suportar sem comprometer as operações.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2 / revisão: appetite x tolerance.",
+    "tags": [
+      "gestao-de-risco"
+    ]
+  },
+  {
+    "id": "d5-risk-tolerance",
+    "frente": "A empresa aceita riscos, mas não aceita comprometer suas funções essenciais: \"aceitamos no máximo 2 horas de indisponibilidade\". Qual é o conceito?",
+    "verso": "Risk tolerance.\nLimite de risco que a empresa suporta sem comprometer as operações.\nNão confundir: appetite = quanto quer assumir; threshold = quando agir.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: questão clássica de risk tolerance.",
+    "tags": [
+      "gestao-de-risco"
+    ]
+  },
+  {
+    "id": "d5-risk-threshold",
+    "frente": "Ao atingir 90% de CPU, o sistema deve gerar um alerta. Qual é o nome desse ponto que dispara uma ação?",
+    "verso": "Risk threshold (limiar de risco).\nNão confundir: KRI é o indicador que mede o risco; threshold é o ponto que dispara a ação.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2 / revisão: threshold.",
+    "tags": [
+      "gestao-de-risco"
+    ]
+  },
+  {
+    "id": "d5-risco-inerente",
+    "frente": "Como se chama o nível de risco que existe antes da aplicação de qualquer controle?",
+    "verso": "Inherent risk (risco inerente).\nO risco que sobra depois dos controles é o residual risk.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo: risco inerente.",
+    "tags": [
+      "gestao-de-risco"
+    ]
+  },
+  {
+    "id": "d5-avaliar-probabilidade-impacto",
+    "frente": "Um risco já foi identificado e registrado. O que deve ser avaliado antes de escolher entre aceitar, mitigar, transferir ou evitar?",
+    "verso": "Probabilidade e impacto.\nFluxo: identificar → avaliar probabilidade + impacto → escolher a resposta → implementar/documentar.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: próximo passo na avaliação de risco.",
+    "tags": [
+      "gestao-de-risco"
+    ]
+  },
+  {
+    "id": "d5-avaliacao-qualitativa",
+    "frente": "Uma avaliação de risco classifica probabilidade = alta e impacto = alto, resultando em risco crítico. Qual é o tipo de avaliação?",
+    "verso": "Qualitativa.\nUsa classificações (alto/médio/baixo).\nNão confundir: quantitativa usa números e valores financeiros.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Erros de simulado: qualitativo x quantitativo.",
+    "tags": [
+      "gestao-de-risco"
+    ]
+  },
+  {
+    "id": "d5-avaliacao-quantitativa",
+    "frente": "Uma avaliação de risco calcula perda possível de R$ 500.000 com probabilidade anual de 10%. Qual é o tipo de avaliação?",
+    "verso": "Quantitativa.\nUsa números e dinheiro (SLE, ARO, ALE).\nNão confundir: qualitativa usa alto/médio/baixo.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Erros de simulado: qualitativo x quantitativo.",
+    "tags": [
+      "gestao-de-risco"
+    ]
+  },
+  {
+    "id": "d5-avaliacao-ad-hoc",
+    "frente": "Como se chama uma avaliação de risco feita de maneira informal, para uma situação específica, sem metodologia estruturada?",
+    "verso": "Ad hoc.\nNão confundir: qualitativa e quantitativa são metodologias estruturadas.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Erros de simulado: tipos de avaliação de risco.",
+    "tags": [
+      "gestao-de-risco"
+    ]
+  },
+  {
+    "id": "d5-exposure-factor",
+    "frente": "Qual métrica representa a porcentagem do valor de um ativo que seria perdida em um incidente?",
+    "verso": "EF (Exposure Factor).\nEntra na fórmula SLE = AV × EF.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: fator de exposição.",
+    "tags": [
+      "gestao-de-risco",
+      "calculo"
+    ]
+  },
+  {
+    "id": "d5-sle",
+    "frente": "Um ativo vale R$ 100.000 e um incidente destruiria 40% dele. Qual é o SLE?",
+    "verso": "R$ 40.000.\nSLE (Single Loss Expectancy) = AV × EF = 100.000 × 0,40.\nÉ a perda de UM incidente.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: cálculo de SLE.",
+    "tags": [
+      "gestao-de-risco",
+      "calculo"
+    ]
+  },
+  {
+    "id": "d5-ale",
+    "frente": "Como se calcula a perda esperada por ano (ALE) de um risco?",
+    "verso": "ALE = SLE × ARO.\nSLE = perda de um incidente; ARO = quantas vezes ocorre por ano.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: ALE.",
+    "tags": [
+      "gestao-de-risco",
+      "calculo"
+    ]
+  },
+  {
+    "id": "d5-aro",
+    "frente": "Qual métrica indica quantas vezes por ano se espera que um incidente ocorra?",
+    "verso": "ARO (Annualized Rate of Occurrence).\nNão confundir: ALE é a perda anual em dinheiro.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: ARO.",
+    "tags": [
+      "gestao-de-risco",
+      "calculo"
+    ]
+  },
+  {
+    "id": "d5-rto",
+    "frente": "Numa BIA, qual métrica define o tempo máximo que um processo pode ficar indisponível antes de causar impacto severo?",
+    "verso": "RTO (Recovery Time Objective).\nEx.: caiu às 10h e precisa voltar até 14h → RTO = 4h.\nNão confundir: MTTR = tempo médio para reparar; MTBF = tempo médio entre falhas.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Erros de simulado: RTO na BIA.",
+    "tags": [
+      "bia",
+      "resiliencia"
+    ]
+  },
+  {
+    "id": "d5-mttr",
+    "frente": "Qual métrica indica quanto tempo, em média, a equipe leva para consertar um sistema que falhou?",
+    "verso": "MTTR (Mean Time To Repair).\nNão confundir: RTO é o tempo máximo aceitável para voltar.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Erros de simulado: RTO x MTTR x MTBF.",
+    "tags": [
+      "bia",
+      "metricas"
+    ]
+  },
+  {
+    "id": "d5-mtbf",
+    "frente": "Qual métrica indica o tempo médio de funcionamento entre uma falha e a próxima?",
+    "verso": "MTBF (Mean Time Between Failures).\nMede confiabilidade: quanto maior, melhor.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Erros de simulado: RTO x MTTR x MTBF.",
+    "tags": [
+      "bia",
+      "metricas"
+    ]
+  },
+  {
+    "id": "d5-iso-27001",
+    "frente": "Qual norma internacional define como implementar um ISMS (sistema de gestão de segurança da informação)?",
+    "verso": "ISO/IEC 27001.\nGerenciar riscos, definir controles e melhorar continuamente.\nNão confundir: PCI DSS = cartões; ISO 27018 = privacidade na nuvem; NIST 800-63 = autenticação digital.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: ISO 27001.",
+    "tags": [
+      "normas",
+      "governanca"
+    ]
+  },
+  {
+    "id": "d5-iso-27018",
+    "frente": "Um provedor de nuvem quer seguir uma norma ISO específica para proteger dados pessoais (PII) na nuvem. Qual norma?",
+    "verso": "ISO/IEC 27018.\nNão confundir: ISO 27001 é o ISMS (gestão da segurança em geral).",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 2: contraste com ISO 27001.",
+    "tags": [
+      "normas",
+      "privacidade",
+      "nuvem"
+    ]
+  },
+  {
+    "id": "d5-data-owner",
+    "frente": "Quem é o responsável dentro da organização por uma informação e pelas decisões sobre sua proteção e uso?",
+    "verso": "Data owner (proprietário).\nNão confundir: controller decide finalidade e meios do tratamento de dados pessoais; processor processa em nome do controller.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: owner x controller x processor.",
+    "tags": [
+      "governanca",
+      "privacidade"
+    ]
+  },
+  {
+    "id": "d5-data-controller",
+    "frente": "Quem determina a finalidade e os meios do tratamento de dados pessoais?",
+    "verso": "Controller (controlador).\nNão confundir: processor (operador) processa os dados em nome do controller.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão / resumo erros: controller x processor.",
+    "tags": [
+      "governanca",
+      "privacidade"
+    ]
+  },
+  {
+    "id": "d5-data-processor",
+    "frente": "Uma empresa de folha de pagamento processa dados dos funcionários de um cliente, seguindo as instruções dele. Qual é o papel dela?",
+    "verso": "Processor (operador).\nProcessa os dados em nome do controller.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: controller x processor.",
+    "tags": [
+      "governanca",
+      "privacidade"
+    ]
+  },
+  {
+    "id": "d5-data-retention",
+    "frente": "Qual política define por quanto tempo os dados devem ser guardados, com base em requisitos legais, regulatórios e operacionais?",
+    "verso": "Data retention.\nPrincípio: não guardar por mais tempo que o necessário.\nNão confundir: sanitização é como eliminar os dados.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: retenção de dados.",
+    "tags": [
+      "dados",
+      "governanca"
+    ]
+  },
+  {
+    "id": "d5-nda",
+    "frente": "Qual documento impede que funcionários ou terceiros divulguem segredos comerciais, código-fonte e estratégias da empresa?",
+    "verso": "NDA (Non-Disclosure Agreement).\nProteção jurídica da informação.\nNão confundir: IAM controla o acesso técnico; o NDA é um acordo legal.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 3 / revisão: NDA.",
+    "tags": [
+      "acordos",
+      "governanca"
+    ]
+  },
+  {
+    "id": "d5-mou",
+    "frente": "Duas organizações querem registrar um entendimento inicial sobre uma possível colaboração, ainda em discussão preliminar. Qual documento usar?",
+    "verso": "MOU (Memorandum of Understanding).\n\"Vamos trabalhar juntos?\"\nNão confundir: MOA já é um acordo com termos e responsabilidades definidos.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: MOU x MOA x BPA x NDA.",
+    "tags": [
+      "acordos",
+      "governanca"
+    ]
+  },
+  {
+    "id": "d5-moa",
+    "frente": "Qual documento formaliza um acordo entre as partes, com termos e responsabilidades mais específicos que um memorando de entendimento?",
+    "verso": "MOA (Memorandum of Agreement).\nNão confundir: MOU é só um entendimento inicial.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: MOU x MOA x BPA x NDA.",
+    "tags": [
+      "acordos",
+      "governanca"
+    ]
+  },
+  {
+    "id": "d5-bpa",
+    "frente": "Qual documento estabelece formalmente os termos, responsabilidades e obrigações de uma parceria comercial?",
+    "verso": "BPA (Business Partnership Agreement).",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: MOU x MOA x BPA x NDA.",
+    "tags": [
+      "acordos",
+      "governanca"
+    ]
+  },
+  {
+    "id": "d5-treinamento-desatualizado",
+    "frente": "A empresa percebe que o conteúdo do treinamento de conscientização está desatualizado. O que fazer primeiro?",
+    "verso": "Atualizar o conteúdo e depois realizar o novo treinamento.\nTreinar de novo com o material antigo não resolve.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 3: treinamento desatualizado.",
+    "tags": [
+      "conscientizacao"
+    ]
+  },
+  {
+    "id": "d5-offboarding",
+    "frente": "No desligamento de um funcionário, em quais três áreas de segurança o processo deve focar?",
+    "verso": "Gestão de contas, segurança física e ativos da empresa.\nRevogar acessos, recolher crachás/chaves e reaver notebook/celular.\nNão confundir: bens pessoais não fazem parte do escopo.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Questões erradas: desligamento; marquei bens pessoais.",
+    "tags": [
+      "offboarding",
+      "iam"
+    ]
+  },
+  {
+    "id": "d5-recon-ativo-port-scan",
+    "frente": "Num pentest, depois de concluir o reconhecimento passivo, qual é normalmente o próximo passo?",
+    "verso": "Reconhecimento ativo: port scan (Nmap, Masscan).\nDescobre portas abertas, serviços e versões.\nPassivo = não interage; ativo = interage com o alvo.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Simulado 3: próximo passo após reconhecimento passivo.",
+    "tags": [
+      "pentest",
+      "reconhecimento"
+    ]
+  },
+  {
+    "id": "d5-dumpster-diving-passivo",
+    "frente": "Dumpster diving (vasculhar o lixo da empresa) é reconhecimento ativo ou passivo?",
+    "verso": "Passivo.\nNão interage com os sistemas do alvo, assim como OSINT, redes sociais e notícias.\nAtivo = port scan, banner grabbing, requisições ao servidor.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Revisão: dumpster diving é passivo.",
+    "tags": [
+      "pentest",
+      "reconhecimento"
+    ]
+  },
+  {
+    "id": "d5-dns-enumeration-ativo",
+    "frente": "Um pentester consulta os servidores DNS do alvo para descobrir subdomínios como vpn.empresa.com e dev.empresa.com. Que tipo de reconhecimento é esse?",
+    "verso": "Reconhecimento ativo (DNS enumeration).\nInterage/consulta a infraestrutura do alvo.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo erros: enumeração DNS é ativa.",
+    "tags": [
+      "pentest",
+      "reconhecimento",
+      "dns"
+    ]
+  },
+  {
+    "id": "d5-pentest-apos-vulnerabilidade",
+    "frente": "No pentest, o analista terminou o reconhecimento e identificou uma possível vulnerabilidade no servidor SQL. Qual é o próximo passo?",
+    "verso": "Testar ativamente os controles de segurança relacionados à vulnerabilidade (validar).\nSó depois vem a exploração.\nSequência: reconhecer → encontrar → testar → explorar → relatar.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Erros de simulado: próximo passo do pentest; marquei explorar.",
+    "tags": [
+      "pentest"
+    ]
+  },
+  {
+    "id": "d5-black-box",
+    "frente": "O pentester recebe só o nome da empresa, sem nenhuma informação sobre a infraestrutura. Qual é o tipo de teste?",
+    "verso": "Black box (unknown environment).\nNão confundir: gray box = parcialmente conhecido; white box = totalmente conhecido.",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo: tipos de teste.",
+    "tags": [
+      "pentest"
+    ]
+  },
+  {
+    "id": "d5-gray-box",
+    "frente": "O pentester recebe algumas informações, como faixas de IP e uma conta de usuário comum, mas não a documentação completa. Qual é o tipo de teste?",
+    "verso": "Gray box (partially known environment).",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo: tipos de teste.",
+    "tags": [
+      "pentest"
+    ]
+  },
+  {
+    "id": "d5-white-box",
+    "frente": "O pentester recebe diagramas de rede, código-fonte e credenciais completas. Qual é o tipo de teste?",
+    "verso": "White box (known environment).",
+    "dominio": "5.0",
+    "origem": "simulado",
+    "adicionado_em": "2026-09-28",
+    "questao_original": "Resumo: tipos de teste.",
+    "tags": [
+      "pentest"
+    ]
+  }
+]
