@@ -4,6 +4,7 @@ import type { Card } from 'ts-fsrs'
 import Fim from './components/Fim'
 import Home from './components/Home'
 import Login from './components/Login'
+import NovaSenha from './components/NovaSenha'
 import Revisao from './components/Revisao'
 import { diaSP, type Filtro } from './lib/fila'
 import { calcularOfensiva, carregarDias, diasDoProgresso, registrarDia } from './lib/ofensiva'
@@ -14,6 +15,7 @@ type Tela = 'home' | 'revisao' | 'fim'
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
+  const [recuperandoSenha, setRecuperandoSenha] = useState(false)
   const [progresso, setProgresso] = useState<ProgressoMap | null>(null)
   const [erroCarga, setErroCarga] = useState<string | null>(null)
   const [tela, setTela] = useState<Tela>('home')
@@ -23,7 +25,11 @@ export default function App() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data } = supabase.auth.onAuthStateChange((_evt, s) => setSession(s))
+    const { data } = supabase.auth.onAuthStateChange((evt, s) => {
+      // chegou pelo link de "esqueci minha senha": pede a nova senha antes de abrir o app
+      if (evt === 'PASSWORD_RECOVERY') setRecuperandoSenha(true)
+      setSession(s)
+    })
     return () => data.subscription.unsubscribe()
   }, [])
 
@@ -75,6 +81,7 @@ export default function App() {
 
   if (session === undefined) return <Centro>Carregando…</Centro>
   if (!session || !userId) return <Login />
+  if (recuperandoSenha) return <NovaSenha onPronto={() => setRecuperandoSenha(false)} />
 
   if (erroCarga) {
     return (
