@@ -1,11 +1,94 @@
 @import 'tailwindcss';
 
+:root {
+  --bg: #f4f6fa;
+  --surface: #ffffff;
+  --surface-2: #e9edf4;
+  --ink: #14213d;
+  --muted: #5b6883;
+  --line: #d8dee9;
+  --primary: #14213d;
+  --on-primary: #ffffff;
+  --flame: #f26b1d;
+  --good: #2e9e5b;
+  --d1: #3a7bd5;
+  --d2: #d64550;
+  --d3: #1f9e89;
+  --d4: #c98404;
+  --d5: #7c5cd6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1626;
+    --surface: #172238;
+    --surface-2: #202d46;
+    --ink: #e6ebf4;
+    --muted: #93a0ba;
+    --line: #2a3853;
+    --primary: #e6ebf4;
+    --on-primary: #0e1626;
+    --flame: #ff8a3d;
+    --good: #52c17f;
+    --d1: #6fa3ee;
+    --d2: #f0737c;
+    --d3: #4cc2ae;
+    --d4: #f2b33d;
+    --d5: #a48bef;
+  }
+}
+
+@theme inline {
+  --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-flame: var(--flame);
+}
+
 @layer base {
   html {
     color-scheme: light dark;
+    -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    @apply bg-bg font-sans text-ink antialiased;
     -webkit-tap-highlight-color: transparent;
+  }
+  button,
+  a,
+  input {
+    touch-action: manipulation;
+  }
+  h1,
+  h2 {
+    text-wrap: balance;
+  }
+}
+
+@keyframes revelar {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-revelar {
+  animation: revelar 180ms ease-out both;
+}
+
+@utility foco {
+  &:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
   }
 }

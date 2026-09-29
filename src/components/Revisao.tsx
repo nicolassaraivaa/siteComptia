@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { createEmptyCard, type Card, type Grade } from 'ts-fsrs'
-import { DOMINIOS } from '../config'
+import { DOMINIO_COR, DOMINIOS } from '../config'
 import { montarFila, type Filtro, type ItemFila } from '../lib/fila'
 import { BOTOES, emAprendizado, formatIntervalo, previa } from '../lib/fsrs'
 import { salvarProgresso, type ProgressoMap } from '../lib/progresso'
@@ -147,30 +147,41 @@ export default function Revisao({ userId, progresso, filtro, onSalvo, onFim, onS
 
   if (acabou) return null
 
+  const [respostaDireta, ...explicacao] = atual ? atual.data.verso.split('\n') : []
+
   return (
-    <div className="mx-auto flex min-h-dvh max-w-xl flex-col px-4 pt-4 pb-40 sm:pb-8">
-      <header className="mb-4 flex items-center gap-3">
+    <div className="mx-auto flex min-h-dvh max-w-xl flex-col px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-44 sm:pb-10">
+      <h1 className="sr-only">Revisão</h1>
+      <header className="mb-5 flex items-center gap-3">
         <button
           onClick={onSair}
-          aria-label="Voltar"
-          className="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-800"
+          aria-label="Encerrar revisão e voltar ao início"
+          className="foco -ml-2 flex h-10 w-10 items-center justify-center rounded-full text-xl text-muted transition-colors hover:bg-surface-2 hover:text-ink"
         >
-          ✕
+          <span aria-hidden="true">✕</span>
         </button>
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-          <div className="h-full bg-indigo-600 transition-all" style={{ width: `${pct}%` }} />
+        <div
+          className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2"
+          role="progressbar"
+          aria-label="Progresso da sessão"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={feitos}
+        >
+          <div className="h-full rounded-full bg-ink transition-[width] duration-300" style={{ width: `${pct}%` }} />
         </div>
-        <span className="text-sm text-slate-500 tabular-nums dark:text-slate-400">
+        <span className="text-sm text-muted tabular-nums">
           {feitos}/{total}
         </span>
       </header>
 
       {esperando ? (
-        <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <p className="mb-6 text-lg">Próximo card em {formatIntervalo(aprendendo[0].card.due, agora)}</p>
+        <div className="flex flex-1 flex-col items-center justify-center text-center" aria-live="polite">
+          <p className="text-sm text-muted">Só restam cards em aprendizado</p>
+          <p className="mt-1 mb-6 text-2xl font-bold">Próximo card em {formatIntervalo(aprendendo[0].card.due, agora)}</p>
           <button
             onClick={() => setSessao((s) => avancar(s, new Date(), true))}
-            className="rounded-xl bg-indigo-600 px-6 py-3 font-semibold text-white hover:bg-indigo-700"
+            className="foco rounded-2xl bg-primary px-6 py-3 font-bold text-on-primary transition-opacity hover:opacity-90"
           >
             Revisar agora
           </button>
@@ -178,63 +189,80 @@ export default function Revisao({ userId, progresso, filtro, onSalvo, onFim, onS
       ) : (
         atual && (
           <>
-            <div className="mb-3 flex items-center gap-2">
-              <span
-                className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200"
-                title={DOMINIOS[atual.data.dominio]}
-              >
-                {atual.data.dominio} · {DOMINIOS[atual.data.dominio]}
-              </span>
-              {!atual.card && <span className="text-xs text-slate-500 dark:text-slate-400">novo</span>}
-            </div>
+            <article
+              key={atual.data.id}
+              style={{ '--dc': DOMINIO_COR[atual.data.dominio] } as CSSProperties}
+              className="overflow-hidden rounded-3xl border border-line bg-surface"
+            >
+              <div className="h-1.5 bg-[var(--dc)]" aria-hidden="true" />
+              <div className="p-5 sm:p-7">
+                <p className="flex items-center gap-2 text-sm">
+                  <span className="font-bold text-[var(--dc)] tabular-nums">{atual.data.dominio}</span>
+                  <span className="min-w-0 truncate text-muted">{DOMINIOS[atual.data.dominio]}</span>
+                  {!atual.card && (
+                    <span className="ml-auto shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium">Novo</span>
+                  )}
+                </p>
 
-            <article className="rounded-2xl bg-white p-5 shadow-sm dark:bg-slate-900">
-              <p className="text-lg leading-relaxed font-medium">{atual.data.frente}</p>
-              {mostrando && (
-                <>
-                  <hr className="my-5 border-slate-200 dark:border-slate-700" />
-                  <p className="leading-relaxed whitespace-pre-line">{atual.data.verso}</p>
-                </>
-              )}
+                <h2 className="mt-4 text-xl leading-snug font-bold text-pretty break-words sm:text-2xl">{atual.data.frente}</h2>
+
+                {mostrando && (
+                  <div className="motion-safe:animate-revelar mt-6 border-t border-line pt-5">
+                    <p className="text-lg leading-snug font-bold break-words">{respostaDireta}</p>
+                    {explicacao.length > 0 && (
+                      <p className="mt-2 leading-relaxed whitespace-pre-line text-ink/85 break-words">{explicacao.join('\n')}</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </article>
 
             {erro && pendente && (
-              <div className="mt-4 rounded-xl bg-red-100 p-4 text-red-900 dark:bg-red-900/40 dark:text-red-100">
-                <p className="mb-3 text-sm">Erro ao salvar: {erro}</p>
+              <div className="mt-4 rounded-2xl border border-[var(--d2)] bg-surface p-4" role="alert">
+                <p className="text-sm">
+                  Sua avaliação não foi salva ({erro}). Verifique a conexão e tente de novo.
+                </p>
                 <button
                   onClick={() => void salvar(pendente)}
                   disabled={salvando}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                  className="foco mt-3 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-on-primary disabled:opacity-60"
                 >
                   {salvando ? 'Salvando…' : 'Tentar de novo'}
                 </button>
               </div>
             )}
 
-            <div className="fixed inset-x-0 bottom-0 border-t border-slate-200 bg-slate-50/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:mt-6 sm:border-0 sm:bg-transparent sm:p-0 dark:border-slate-800 dark:bg-slate-950/95 sm:dark:bg-transparent">
-              {!mostrando ? (
-                <button
-                  onClick={mostrarResposta}
-                  className="w-full rounded-xl bg-indigo-600 py-4 text-lg font-semibold text-white hover:bg-indigo-700"
-                >
-                  Mostrar resposta <span className="hidden text-sm opacity-70 sm:inline">(Espaço)</span>
-                </button>
-              ) : (
-                <div className="grid grid-cols-4 gap-2">
-                  {BOTOES.map((b) => (
-                    <button
-                      key={b.grade}
-                      onClick={() => avaliar(b.grade)}
-                      disabled={salvando || !!pendente}
-                      className={`flex flex-col items-center rounded-xl py-3 text-white disabled:opacity-50 ${b.cor}`}
-                    >
-                      <span className="font-semibold">{b.label}</span>
-                      <span className="text-xs opacity-90">{intervalos?.[b.grade]}</span>
-                      <span className="hidden text-[10px] opacity-60 sm:block">{b.tecla}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div className="fixed inset-x-0 bottom-0 border-t border-line bg-bg/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:mt-6 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+              <div className="mx-auto max-w-xl">
+                {!mostrando ? (
+                  <button
+                    onClick={mostrarResposta}
+                    className="foco flex w-full items-center justify-center gap-3 rounded-2xl bg-primary py-4 text-lg font-bold text-on-primary transition-opacity hover:opacity-90"
+                  >
+                    Mostrar resposta
+                    <kbd className="hidden rounded-md border border-current/30 px-1.5 text-xs font-medium opacity-70 sm:inline">
+                      Espaço
+                    </kbd>
+                  </button>
+                ) : (
+                  <div className="grid grid-cols-4 gap-2">
+                    {BOTOES.map((b) => (
+                      <button
+                        key={b.grade}
+                        onClick={() => avaliar(b.grade)}
+                        disabled={salvando || !!pendente}
+                        aria-label={`${b.label}, próxima revisão em ${intervalos?.[b.grade]} (tecla ${b.tecla})`}
+                        style={{ '--bc': b.cor } as CSSProperties}
+                        className="foco flex flex-col items-center gap-0.5 rounded-2xl border-2 border-[var(--bc)] bg-[color-mix(in_srgb,var(--bc)_12%,var(--surface))] py-3 transition-colors hover:bg-[color-mix(in_srgb,var(--bc)_24%,var(--surface))] active:bg-[color-mix(in_srgb,var(--bc)_32%,var(--surface))] disabled:opacity-50"
+                      >
+                        <span className="font-bold">{b.label}</span>
+                        <span className="text-xs text-muted tabular-nums">{intervalos?.[b.grade]}</span>
+                        <kbd className="hidden text-[10px] text-muted sm:block">{b.tecla}</kbd>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )

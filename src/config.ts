@@ -2,6 +2,8 @@ export const LIMITE_BACKLOG_DIA = 20
 
 export const FUSO = 'America/Sao_Paulo'
 
+export const DATA_PROVA = '2026-10-17'
+
 export const DOMINIOS = {
   '1.0': 'General Security Concepts',
   '2.0': 'Threats, Vulnerabilities, and Mitigations',
@@ -11,3 +13,12 @@ export const DOMINIOS = {
 } as const
 
 export const ORIGENS = ['backlog', 'simulado'] as const
+
+/** Cor de cada domínio (variáveis definidas em index.css) */
+export const DOMINIO_COR = {
+  '1.0': 'var(--d1)',
+  '2.0': 'var(--d2)',
+  '3.0': 'var(--d3)',
+  '4.0': 'var(--d4)',
+  '5.0': 'var(--d5)',
+} as const

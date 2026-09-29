@@ -13,47 +13,70 @@ export default function Login() {
     setEntrando(true)
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: senha })
     if (error) {
-      setErro(error.message === 'Invalid login credentials' ? 'Email ou senha incorretos.' : error.message)
+      setErro(
+        error.message === 'Invalid login credentials'
+          ? 'Email ou senha incorretos. Confira e tente de novo.'
+          : error.message,
+      )
       setEntrando(false)
     }
     // sucesso: onAuthStateChange no App troca de tela
   }
 
   const input =
-    'rounded-lg border border-slate-300 bg-white px-4 py-3 text-base outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900'
+    'foco w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink placeholder:text-muted/70 focus:border-ink'
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4">
-      <h1 className="mb-1 text-2xl font-bold">Sec+ Flashcards</h1>
-      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">SY0-701 · prova em 17/10/2026</p>
-      <form onSubmit={entrar} className="flex flex-col gap-3">
-        <input
-          type="email"
-          required
-          autoComplete="email"
-          placeholder="seu@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={input}
-        />
-        <input
-          type="password"
-          required
-          autoComplete="current-password"
-          placeholder="Senha"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-          className={input}
-        />
+    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4 py-10">
+      <h1 className="text-3xl font-extrabold tracking-tight">Sec+ Flashcards</h1>
+      <p className="mt-1 mb-8 text-muted">Revisão para a SY0-701, prova em 17 de outubro.</p>
+
+      <form onSubmit={entrar} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="email" className="text-sm font-medium">
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            spellCheck={false}
+            placeholder="nome@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={input}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="senha" className="text-sm font-medium">
+            Senha
+          </label>
+          <input
+            id="senha"
+            name="password"
+            type="password"
+            required
+            autoComplete="current-password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            className={input}
+          />
+        </div>
+        {erro && (
+          <p className="text-sm font-medium text-[var(--d2)]" role="alert">
+            {erro}
+          </p>
+        )}
         <button
           type="submit"
           disabled={entrando}
-          className="rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+          className="foco mt-2 rounded-2xl bg-primary py-4 text-lg font-bold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {entrando ? 'Entrando…' : 'Entrar'}
         </button>
-        {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
       </form>
-    </div>
+    </main>
   )
 }

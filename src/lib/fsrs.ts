@@ -59,10 +59,10 @@ export function emAprendizado(card: Card): boolean {
 }
 
 export const BOTOES: { grade: Grade; label: string; tecla: string; cor: string }[] = [
-  { grade: Rating.Again, label: 'Errei', tecla: '1', cor: 'bg-red-600 hover:bg-red-700' },
-  { grade: Rating.Hard, label: 'Difícil', tecla: '2', cor: 'bg-amber-600 hover:bg-amber-700' },
-  { grade: Rating.Good, label: 'Bom', tecla: '3', cor: 'bg-green-600 hover:bg-green-700' },
-  { grade: Rating.Easy, label: 'Fácil', tecla: '4', cor: 'bg-sky-600 hover:bg-sky-700' },
+  { grade: Rating.Again, label: 'Errei', tecla: '1', cor: 'var(--d2)' },
+  { grade: Rating.Hard, label: 'Difícil', tecla: '2', cor: 'var(--d4)' },
+  { grade: Rating.Good, label: 'Bom', tecla: '3', cor: 'var(--good)' },
+  { grade: Rating.Easy, label: 'Fácil', tecla: '4', cor: 'var(--d1)' },
 ]
 
 /** "1 min", "10 min", "3 h", "4 d" */

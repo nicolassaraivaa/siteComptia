@@ -79,8 +79,12 @@ export default function App() {
   if (erroCarga) {
     return (
       <Centro>
-        <p className="mb-4 text-red-600 dark:text-red-400">Erro ao carregar progresso: {erroCarga}</p>
-        <button onClick={carregar} className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white">
+        <p className="mb-1 font-bold">Não foi possível carregar seu progresso</p>
+        <p className="mb-6 max-w-sm text-sm text-muted">{erroCarga}. Verifique a conexão e tente de novo.</p>
+        <button
+          onClick={carregar}
+          className="foco rounded-2xl bg-primary px-6 py-3 font-bold text-on-primary transition-opacity hover:opacity-90"
+        >
           Tentar de novo
         </button>
       </Centro>
@@ -117,5 +121,9 @@ export default function App() {
 }
 
 function Centro({ children }: { children: React.ReactNode }) {
-  return <div className="flex min-h-dvh flex-col items-center justify-center p-4 text-center">{children}</div>
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center p-4 text-center text-muted" aria-live="polite">
+      {children}
+    </div>
+  )
 }
