@@ -1,17 +1,13 @@
 import { State, type Card } from 'ts-fsrs'
-import { FUSO, LIMITE_BACKLOG_DIA } from '../config'
+import { LIMITE_BACKLOG_DIA } from '../config'
 import { CARDS, CARDS_BY_ID, type CardData, type Dominio } from './cards'
+import { diaSP } from './datas'
 import { emAprendizado } from './fsrs'
 import type { ProgressoMap } from './progresso'
 
+export { diaSP }
+
 export type Filtro = Dominio | 'todos'
-
-const fmtDia = new Intl.DateTimeFormat('en-CA', { timeZone: FUSO, year: 'numeric', month: '2-digit', day: '2-digit' })
-
-/** YYYY-MM-DD no fuso de São Paulo */
-export function diaSP(d: Date): string {
-  return fmtDia.format(d)
-}
 
 export function passaFiltro(card: CardData, filtro: Filtro): boolean {
   return filtro === 'todos' || card.dominio === filtro

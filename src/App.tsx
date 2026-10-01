@@ -7,6 +7,7 @@ import Login from './components/Login'
 import NovaSenha from './components/NovaSenha'
 import Revisao from './components/Revisao'
 import { diaSP, type Filtro } from './lib/fila'
+import type { Stats } from './lib/fsrs'
 import { calcularOfensiva, carregarDias, diasDoProgresso, registrarDia } from './lib/ofensiva'
 import { carregarProgresso, type ProgressoMap } from './lib/progresso'
 import { supabase } from './lib/supabase'
@@ -57,11 +58,11 @@ export default function App() {
   }, [userId, carregar])
 
   const onSalvo = useCallback(
-    (cardId: string, card: Card) => {
+    (cardId: string, card: Card, stats: Stats) => {
       const now = new Date()
       setProgresso((prev) => {
         const next = new Map(prev)
-        next.set(cardId, { card, createdAt: prev?.get(cardId)?.createdAt ?? now, updatedAt: now })
+        next.set(cardId, { card, createdAt: prev?.get(cardId)?.createdAt ?? now, updatedAt: now, stats })
         return next
       })
       const hoje = diaSP(now)

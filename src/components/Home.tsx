@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import { DATA_PROVA, DATA_PROVA_TEXTO, DOMINIO_COR, DOMINIOS } from '../config'
 import { CARDS, type Dominio } from '../lib/cards'
+import { diasEntre } from '../lib/datas'
 import { diaSP, montarFila, type Filtro } from '../lib/fila'
 import type { Ofensiva } from '../lib/ofensiva'
 import type { ProgressoMap } from '../lib/progresso'
@@ -18,8 +19,11 @@ type Props = {
 
 const LISTA_DOMINIOS = Object.keys(DOMINIOS) as Dominio[]
 
-function diasEntre(de: string, ate: string): number {
-  return Math.round((Date.parse(`${ate}T12:00:00Z`) - Date.parse(`${de}T12:00:00Z`)) / 86_400_000)
+/** Abaixo disso a porcentagem de acerto ainda não diz nada */
+const MIN_REVISOES_ACERTO = 5
+
+function acerto(revisoes: number, erros: number): number | null {
+  return revisoes < MIN_REVISOES_ACERTO ? null : Math.round(((revisoes - erros) / revisoes) * 100)
 }
 
 export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onComecar }: Props) {
@@ -40,18 +44,26 @@ export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onC
     const cards = CARDS.filter((c) => c.dominio === d)
     let pendentes = 0
     let vistos = 0
+    let revisoes = 0
+    let erros = 0
     for (const c of cards) {
       const p = progresso.get(c.id)
       if (!p) pendentes++
       else {
         vistos++
+        revisoes += p.stats.revisoes
+        erros += p.stats.erros
         if (p.card.due <= now) pendentes++
       }
     }
-    return { d, total: cards.length, vistos, pendentes }
+    return { d, total: cards.length, vistos, pendentes, revisoes, erros }
   })
   const totalCards = CARDS.length
   const totalVistos = porDominio.reduce((s, r) => s + r.vistos, 0)
+  const acertoGeral = acerto(
+    porDominio.reduce((s, r) => s + r.revisoes, 0),
+    porDominio.reduce((s, r) => s + r.erros, 0),
+  )
 
   return (
     <div className="mx-auto max-w-xl px-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))]">
@@ -125,6 +137,7 @@ export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onC
               vistos={totalVistos}
               total={totalCards}
               pendentes={porDominio.reduce((s, r) => s + r.pendentes, 0)}
+              acerto={acertoGeral}
             />
           </li>
           {porDominio.map((r) => (
@@ -138,6 +151,7 @@ export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onC
                 vistos={r.vistos}
                 total={r.total}
                 pendentes={r.pendentes}
+                acerto={acerto(r.revisoes, r.erros)}
               />
             </li>
           ))}
@@ -156,9 +170,16 @@ type BotaoDominioProps = {
   vistos: number
   total: number
   pendentes: number
+  acerto: number | null
 }
 
-function BotaoDominio({ ativo, onClick, cor, numero, titulo, vistos, total, pendentes }: BotaoDominioProps) {
+function corAcerto(pct: number): string {
+  if (pct < 70) return 'var(--d2)'
+  if (pct < 85) return 'var(--d4)'
+  return 'var(--good)'
+}
+
+function BotaoDominio({ ativo, onClick, cor, numero, titulo, vistos, total, pendentes, acerto }: BotaoDominioProps) {
   const pct = total === 0 ? 0 : Math.round((vistos / total) * 100)
   return (
     <button
@@ -182,6 +203,18 @@ function BotaoDominio({ ativo, onClick, cor, numero, titulo, vistos, total, pend
           <span className="w-14 shrink-0 text-right text-xs text-muted tabular-nums">
             {vistos}/{total}
           </span>
+        </span>
+        <span className="mt-1 block text-xs text-muted">
+          {acerto === null ? (
+            'Acerto: poucas revisões ainda'
+          ) : (
+            <>
+              Acerto:{' '}
+              <span className="font-bold tabular-nums" style={{ color: corAcerto(acerto) }}>
+                {acerto}%
+              </span>
+            </>
+          )}
         </span>
       </span>
       <span className="w-12 shrink-0 text-right">

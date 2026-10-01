@@ -2,17 +2,19 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import { createEmptyCard, type Card, type Grade } from 'ts-fsrs'
 import { DOMINIO_COR, DOMINIOS } from '../config'
 import { montarFila, type Filtro, type ItemFila } from '../lib/fila'
-import { BOTOES, emAprendizado, formatIntervalo, previa } from '../lib/fsrs'
+import { BOTOES, emAprendizado, formatIntervalo, previa, somarStats, type Stats } from '../lib/fsrs'
 import { salvarProgresso, type ProgressoMap } from '../lib/progresso'
 
 type Props = {
   userId: string
   progresso: ProgressoMap
   filtro: Filtro
-  onSalvo: (cardId: string, card: Card) => void
+  onSalvo: (cardId: string, card: Card, stats: Stats) => void
   onFim: () => void
   onSair: () => void
 }
+
+type Salvamento = { item: ItemFila; card: Card; stats: Stats }
 
 type Aprendendo = { data: ItemFila['data']; card: Card }
 
@@ -56,7 +58,7 @@ export default function Revisao({ userId, progresso, filtro, onSalvo, onFim, onS
   const [mostrando, setMostrando] = useState(false)
   const [preview, setPreview] = useState<{ now: Date; cards: Record<Grade, Card> } | null>(null)
   const [salvando, setSalvando] = useState(false)
-  const [pendente, setPendente] = useState<{ item: ItemFila; card: Card } | null>(null)
+  const [pendente, setPendente] = useState<Salvamento | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [agora, setAgora] = useState(() => new Date())
 
@@ -87,18 +89,18 @@ export default function Revisao({ userId, progresso, filtro, onSalvo, onFim, onS
   }, [atual, mostrando])
 
   const salvar = useCallback(
-    async (p: { item: ItemFila; card: Card }) => {
+    async (p: Salvamento) => {
       setSalvando(true)
       setErro(null)
       try {
-        await salvarProgresso(userId, p.item.data.id, p.card)
+        await salvarProgresso(userId, p.item.data.id, p.card, p.stats)
       } catch (e) {
         setErro((e as Error).message || 'Falha ao salvar')
         setPendente(p)
         setSalvando(false)
         return
       }
-      onSalvo(p.item.data.id, p.card)
+      onSalvo(p.item.data.id, p.card, p.stats)
       setPendente(null)
       setMostrando(false)
       setPreview(null)
@@ -115,9 +117,10 @@ export default function Revisao({ userId, progresso, filtro, onSalvo, onFim, onS
   const avaliar = useCallback(
     (grade: Grade) => {
       if (!atual || !preview || salvando || pendente) return
-      void salvar({ item: atual, card: preview.cards[grade] })
+      const stats = somarStats(progresso.get(atual.data.id)?.stats, grade)
+      void salvar({ item: atual, card: preview.cards[grade], stats })
     },
-    [atual, preview, salvando, pendente, salvar],
+    [atual, preview, salvando, pendente, salvar, progresso],
   )
 
   useEffect(() => {

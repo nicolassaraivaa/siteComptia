@@ -1,11 +1,12 @@
 import type { Card } from 'ts-fsrs'
-import { deserializeCard, serializeCard, type EstadoJson } from './fsrs'
+import { deserializeCard, deserializeStats, serializeCard, type EstadoJson, type Stats } from './fsrs'
 import { supabase } from './supabase'
 
 export type Progresso = {
   card: Card
   createdAt: Date
   updatedAt: Date
+  stats: Stats
 }
 
 export type ProgressoMap = Map<string, Progresso>
@@ -28,6 +29,7 @@ export async function carregarProgresso(): Promise<ProgressoMap> {
         card: deserializeCard(row.estado),
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at),
+        stats: deserializeStats(row.estado),
       })
     }
     if (data.length < PAGINA) break
@@ -35,14 +37,14 @@ export async function carregarProgresso(): Promise<ProgressoMap> {
   return map
 }
 
-export async function salvarProgresso(userId: string, cardId: string, card: Card): Promise<void> {
+export async function salvarProgresso(userId: string, cardId: string, card: Card, stats: Stats): Promise<void> {
   const now = new Date().toISOString()
   // created_at não é enviado: fica com a data da primeira revisão
   const { error } = await supabase.from('progresso').upsert(
     {
       user_id: userId,
       card_id: cardId,
-      estado: serializeCard(card),
+      estado: serializeCard(card, stats),
       due: card.due.toISOString(),
       updated_at: now,
     },
