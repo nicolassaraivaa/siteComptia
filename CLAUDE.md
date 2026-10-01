@@ -1,6 +1,6 @@
 # Sec+ Flashcards — instruções
 
-App de flashcards para a Security+ SY0-701 (prova em 17/10/2026). Cards em `src/data/cards.json`, progresso no Supabase.
+App de flashcards para a Security+ SY0-701 (prova em 21/11/2026). Cards em `src/data/cards.json`, progresso no Supabase.
 
 ## Quando eu mandar erros de simulado ou anotações
 

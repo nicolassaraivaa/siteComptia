@@ -1,6 +1,6 @@
 import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type Grade } from 'ts-fsrs'
 
-const MAXIMO_DIAS = 7 // a prova é em 17/10: nenhum card pode ser agendado para mais de 7 dias
+const MAXIMO_DIAS = 7 // teto de intervalo para todo card voltar várias vezes antes da prova (21/11)
 
 export const f = fsrs(
   generatorParameters({

@@ -2,7 +2,14 @@ export const LIMITE_BACKLOG_DIA = 20
 
 export const FUSO = 'America/Sao_Paulo'
 
-export const DATA_PROVA = '2026-10-17'
+export const DATA_PROVA = '2026-11-21'
+
+/** "21 de novembro" */
+export const DATA_PROVA_TEXTO = new Intl.DateTimeFormat('pt-BR', {
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'UTC',
+}).format(new Date(`${DATA_PROVA}T12:00:00Z`))
 
 export const DOMINIOS = {
   '1.0': 'General Security Concepts',

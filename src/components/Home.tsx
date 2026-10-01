@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { DATA_PROVA, DOMINIO_COR, DOMINIOS } from '../config'
+import { DATA_PROVA, DATA_PROVA_TEXTO, DOMINIO_COR, DOMINIOS } from '../config'
 import { CARDS, type Dominio } from '../lib/cards'
 import { diaSP, montarFila, type Filtro } from '../lib/fila'
 import type { Ofensiva } from '../lib/ofensiva'
@@ -68,7 +68,7 @@ export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onC
 
       <section className="rounded-3xl border border-line bg-surface p-5 sm:p-6">
         <p className="text-sm text-muted">
-          {diasProva > 0 ? 'Faltam para a prova (17 de outubro)' : diasProva === 0 ? 'A prova é hoje' : 'Prova realizada'}
+          {diasProva > 0 ? `Faltam para a prova (${DATA_PROVA_TEXTO})` : diasProva === 0 ? 'A prova é hoje' : 'Prova realizada'}
         </p>
         {diasProva > 0 && (
           <p className="mt-1 flex items-baseline gap-2 leading-none">
