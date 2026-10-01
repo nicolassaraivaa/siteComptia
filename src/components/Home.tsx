@@ -43,6 +43,7 @@ export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onC
   const porDominio = LISTA_DOMINIOS.map((d) => {
     const cards = CARDS.filter((c) => c.dominio === d)
     let pendentes = 0
+    let feitosHoje = 0
     let vistos = 0
     let revisoes = 0
     let erros = 0
@@ -54,12 +55,15 @@ export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onC
         revisoes += p.stats.revisoes
         erros += p.stats.erros
         if (p.card.due <= now) pendentes++
+        else if (diaSP(p.updatedAt) === hoje) feitosHoje++
       }
     }
-    return { d, total: cards.length, vistos, pendentes, revisoes, erros }
+    return { d, total: cards.length, vistos, pendentes, feitosHoje, revisoes, erros }
   })
   const totalCards = CARDS.length
   const totalVistos = porDominio.reduce((s, r) => s + r.vistos, 0)
+  const totalPendentes = porDominio.reduce((s, r) => s + r.pendentes, 0)
+  const totalFeitosHoje = porDominio.reduce((s, r) => s + r.feitosHoje, 0)
   const acertoGeral = acerto(
     porDominio.reduce((s, r) => s + r.revisoes, 0),
     porDominio.reduce((s, r) => s + r.erros, 0),
@@ -134,9 +138,8 @@ export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onC
               onClick={() => onFiltro('todos')}
               cor="var(--ink)"
               titulo="Todos os domínios"
-              vistos={totalVistos}
-              total={totalCards}
-              pendentes={porDominio.reduce((s, r) => s + r.pendentes, 0)}
+              pendentes={totalPendentes}
+              feitosHoje={totalFeitosHoje}
               acerto={acertoGeral}
             />
           </li>
@@ -148,9 +151,8 @@ export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onC
                 cor={DOMINIO_COR[r.d]}
                 numero={r.d}
                 titulo={DOMINIOS[r.d]}
-                vistos={r.vistos}
-                total={r.total}
                 pendentes={r.pendentes}
+                feitosHoje={r.feitosHoje}
                 acerto={acerto(r.revisoes, r.erros)}
               />
             </li>
@@ -167,9 +169,8 @@ type BotaoDominioProps = {
   cor: string
   numero?: string
   titulo: string
-  vistos: number
-  total: number
   pendentes: number
+  feitosHoje: number
   acerto: number | null
 }
 
@@ -179,8 +180,10 @@ function corAcerto(pct: number): string {
   return 'var(--good)'
 }
 
-function BotaoDominio({ ativo, onClick, cor, numero, titulo, vistos, total, pendentes, acerto }: BotaoDominioProps) {
-  const pct = total === 0 ? 0 : Math.round((vistos / total) * 100)
+function BotaoDominio({ ativo, onClick, cor, numero, titulo, pendentes, feitosHoje, acerto }: BotaoDominioProps) {
+  // barra = trabalho de hoje: começa vazia quando há pendentes e enche conforme você revisa
+  const meta = pendentes + feitosHoje
+  const pct = meta === 0 ? 100 : Math.round((feitosHoje / meta) * 100)
   return (
     <button
       onClick={onClick}
@@ -197,11 +200,15 @@ function BotaoDominio({ ativo, onClick, cor, numero, titulo, vistos, total, pend
           <span className="line-clamp-2 text-sm leading-snug font-medium">{titulo}</span>
         </span>
         <span className="mt-1.5 flex items-center gap-2">
-          <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+          <span
+            className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"
+            role="img"
+            aria-label={meta === 0 ? 'Nada pendente hoje' : `${feitosHoje} de ${meta} cards de hoje revisados`}
+          >
             <span className="block h-full rounded-full bg-[var(--dc)]" style={{ width: `${pct}%` }} />
           </span>
-          <span className="w-14 shrink-0 text-right text-xs text-muted tabular-nums">
-            {vistos}/{total}
+          <span className="w-20 shrink-0 text-right text-xs text-muted tabular-nums">
+            {meta === 0 ? 'em dia' : `${feitosHoje}/${meta} hoje`}
           </span>
         </span>
         <span className="mt-1 block text-xs text-muted">

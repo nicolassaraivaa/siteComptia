@@ -68,9 +68,12 @@ export function deserializeCard(estado: EstadoJson): Card {
   }
 }
 
-/** Linhas salvas antes dos contadores existirem: usa reps/lapses do FSRS como aproximação */
+/**
+ * Linhas salvas antes dos contadores existirem começam do zero: reps/lapses do FSRS
+ * não registram "Errei" em card novo e deixariam o acerto artificialmente em 100%.
+ */
 export function deserializeStats(estado: EstadoJson): Stats {
-  return estado.stats ?? { revisoes: estado.reps, erros: estado.lapses }
+  return estado.stats ?? { revisoes: 0, erros: 0 }
 }
 
 export function somarStats(anterior: Stats | undefined, grade: Grade): Stats {
