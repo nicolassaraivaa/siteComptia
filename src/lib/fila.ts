@@ -1,6 +1,6 @@
 import { State, type Card } from 'ts-fsrs'
 import { LIMITE_BACKLOG_DIA } from '../config'
-import { CARDS, CARDS_BY_ID, type CardData, type Dominio } from './cards'
+import type { CardData, Dominio } from './cards'
 import { diaSP } from './datas'
 import { emAprendizado } from './fsrs'
 import type { ProgressoMap } from './progresso'
@@ -13,12 +13,18 @@ export function passaFiltro(card: CardData, filtro: Filtro): boolean {
   return filtro === 'todos' || card.dominio === filtro
 }
 
+export type Baralho = { cards: CardData[]; porId: Map<string, CardData> }
+
+export function montarBaralho(cards: CardData[]): Baralho {
+  return { cards, porId: new Map(cards.map((c) => [c.id, c])) }
+}
+
 /** Cards de backlog introduzidos hoje (qualquer domínio) */
-export function backlogIntroduzidosHoje(progresso: ProgressoMap, now: Date): number {
+export function backlogIntroduzidosHoje(baralho: Baralho, progresso: ProgressoMap, now: Date): number {
   const hoje = diaSP(now)
   let n = 0
   for (const [id, p] of progresso) {
-    if (CARDS_BY_ID.get(id)?.origem === 'backlog' && diaSP(p.createdAt) === hoje) n++
+    if (baralho.porId.get(id)?.origem === 'backlog' && diaSP(p.createdAt) === hoje) n++
   }
   return n
 }
@@ -36,13 +42,13 @@ export type FilaInicial = {
   novosBacklog: ItemFila[]
 }
 
-export function montarFila(progresso: ProgressoMap, filtro: Filtro, now: Date): FilaInicial {
+export function montarFila(baralho: Baralho, progresso: ProgressoMap, filtro: Filtro, now: Date): FilaInicial {
   const aprendizado: ItemFila[] = []
   const revisoes: ItemFila[] = []
   const novosSim: CardData[] = []
   const novosBack: CardData[] = []
 
-  for (const data of CARDS) {
+  for (const data of baralho.cards) {
     if (!passaFiltro(data, filtro)) continue
     const p = progresso.get(data.id)
     if (!p) {
@@ -56,7 +62,7 @@ export function montarFila(progresso: ProgressoMap, filtro: Filtro, now: Date): 
   }
 
   const byDue = (a: ItemFila, b: ItemFila) => a.card!.due.getTime() - b.card!.due.getTime()
-  const restanteBacklog = Math.max(0, LIMITE_BACKLOG_DIA - backlogIntroduzidosHoje(progresso, now))
+  const restanteBacklog = Math.max(0, LIMITE_BACKLOG_DIA - backlogIntroduzidosHoje(baralho, progresso, now))
 
   return {
     aprendizado: aprendizado.sort(byDue),
@@ -70,10 +76,10 @@ export function montarFila(progresso: ProgressoMap, filtro: Filtro, now: Date): 
 }
 
 /** Próximo vencimento entre os cards do filtro (para a tela de fim) */
-export function proximoVencimento(progresso: ProgressoMap, filtro: Filtro): Date | null {
+export function proximoVencimento(baralho: Baralho, progresso: ProgressoMap, filtro: Filtro): Date | null {
   let min: Date | null = null
   for (const [id, p] of progresso) {
-    const data = CARDS_BY_ID.get(id)
+    const data = baralho.porId.get(id)
     if (!data || !passaFiltro(data, filtro)) continue
     if (!min || p.card.due < min) min = p.card.due
   }

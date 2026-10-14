@@ -26,3 +26,7 @@ dist-ssr
 # Env
 .env
 .env.local
+
+# Material do simulado (não versionar)
+*.pdf
+questoes-import/

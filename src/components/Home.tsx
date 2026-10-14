@@ -1,8 +1,8 @@
 import type { CSSProperties } from 'react'
 import { DATA_PROVA, DATA_PROVA_TEXTO, DOMINIO_COR, DOMINIOS } from '../config'
-import { CARDS, type Dominio } from '../lib/cards'
+import type { Dominio } from '../lib/cards'
 import { diasEntre } from '../lib/datas'
-import { diaSP, montarFila, type Filtro } from '../lib/fila'
+import { diaSP, montarFila, type Baralho, type Filtro } from '../lib/fila'
 import type { Ofensiva } from '../lib/ofensiva'
 import type { ProgressoMap } from '../lib/progresso'
 import { supabase } from '../lib/supabase'
@@ -10,6 +10,8 @@ import OfensivaCard from './OfensivaCard'
 
 type Props = {
   email: string
+  baralho: Baralho
+  simulado: React.ReactNode
   progresso: ProgressoMap
   ofensiva: Ofensiva
   filtro: Filtro
@@ -26,10 +28,10 @@ function acerto(revisoes: number, erros: number): number | null {
   return revisoes < MIN_REVISOES_ACERTO ? null : Math.round(((revisoes - erros) / revisoes) * 100)
 }
 
-export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onComecar }: Props) {
+export default function Home({ email, baralho, simulado, progresso, ofensiva, filtro, onFiltro, onComecar }: Props) {
   const now = new Date()
   const hoje = diaSP(now)
-  const fila = montarFila(progresso, filtro, now)
+  const fila = montarFila(baralho, progresso, filtro, now)
   const diasProva = diasEntre(hoje, DATA_PROVA)
 
   const contadores = [
@@ -41,7 +43,7 @@ export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onC
   const totalFila = contadores.reduce((s, c) => s + c.valor, 0)
 
   const porDominio = LISTA_DOMINIOS.map((d) => {
-    const cards = CARDS.filter((c) => c.dominio === d)
+    const cards = baralho.cards.filter((c) => c.dominio === d)
     let pendentes = 0
     let feitosHoje = 0
     let vistos = 0
@@ -60,7 +62,7 @@ export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onC
     }
     return { d, total: cards.length, vistos, pendentes, feitosHoje, revisoes, erros }
   })
-  const totalCards = CARDS.length
+  const totalCards = baralho.cards.length
   const totalVistos = porDominio.reduce((s, r) => s + r.vistos, 0)
   const totalPendentes = porDominio.reduce((s, r) => s + r.pendentes, 0)
   const totalFeitosHoje = porDominio.reduce((s, r) => s + r.feitosHoje, 0)
@@ -120,6 +122,8 @@ export default function Home({ email, progresso, ofensiva, filtro, onFiltro, onC
       </section>
 
       <OfensivaCard ofensiva={ofensiva} />
+
+      {simulado}
 
       <section className="mt-8" aria-labelledby="dominios-titulo">
         <div className="mb-3 flex items-baseline justify-between px-1">

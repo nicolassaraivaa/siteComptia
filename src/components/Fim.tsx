@@ -1,10 +1,10 @@
 import { FUSO } from '../config'
-import { proximoVencimento, type Filtro } from '../lib/fila'
+import { proximoVencimento, type Baralho, type Filtro } from '../lib/fila'
 import { formatIntervalo } from '../lib/fsrs'
 import type { Ofensiva } from '../lib/ofensiva'
 import type { ProgressoMap } from '../lib/progresso'
 
-type Props = { progresso: ProgressoMap; filtro: Filtro; ofensiva: Ofensiva; onVoltar: () => void }
+type Props = { baralho: Baralho; progresso: ProgressoMap; filtro: Filtro; ofensiva: Ofensiva; onVoltar: () => void }
 
 const fmt = new Intl.DateTimeFormat('pt-BR', {
   timeZone: FUSO,
@@ -13,9 +13,9 @@ const fmt = new Intl.DateTimeFormat('pt-BR', {
   minute: '2-digit',
 })
 
-export default function Fim({ progresso, filtro, ofensiva, onVoltar }: Props) {
+export default function Fim({ baralho, progresso, filtro, ofensiva, onVoltar }: Props) {
   const now = new Date()
-  const proximo = proximoVencimento(progresso, filtro)
+  const proximo = proximoVencimento(baralho, progresso, filtro)
   const recorde = ofensiva.atual > 1 && ofensiva.atual === ofensiva.recorde
 
   return (

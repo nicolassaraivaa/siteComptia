@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { createEmptyCard, type Card, type Grade } from 'ts-fsrs'
 import { DOMINIO_COR, DOMINIOS } from '../config'
-import { montarFila, type Filtro, type ItemFila } from '../lib/fila'
+import { montarFila, type Baralho, type Filtro, type ItemFila } from '../lib/fila'
 import { BOTOES, emAprendizado, formatIntervalo, previa, somarStats, type Stats } from '../lib/fsrs'
 import { salvarProgresso, type ProgressoMap } from '../lib/progresso'
+import QuestaoVisao from './QuestaoVisao'
 
 type Props = {
+  baralho: Baralho
   userId: string
   progresso: ProgressoMap
   filtro: Filtro
@@ -41,10 +43,10 @@ function avancar(s: Sessao, now: Date, forcar = false): Sessao {
   return { ...s, atual: null }
 }
 
-export default function Revisao({ userId, progresso, filtro, onSalvo, onFim, onSair }: Props) {
+export default function Revisao({ baralho, userId, progresso, filtro, onSalvo, onFim, onSair }: Props) {
   const [sessao, setSessao] = useState<Sessao>(() => {
     const now = new Date()
-    const fila = montarFila(progresso, filtro, now)
+    const fila = montarFila(baralho, progresso, filtro, now)
     return avancar(
       {
         principal: [...fila.revisoes, ...fila.novosSimulado, ...fila.novosBacklog],
@@ -207,15 +209,28 @@ export default function Revisao({ userId, progresso, filtro, onSalvo, onFim, onS
                   )}
                 </p>
 
-                <h2 className="mt-4 text-xl leading-snug font-bold text-pretty break-words sm:text-2xl">{atual.data.frente}</h2>
-
-                {mostrando && (
-                  <div className="motion-safe:animate-revelar mt-6 border-t border-line pt-5">
-                    <p className="text-lg leading-snug font-bold break-words">{respostaDireta}</p>
-                    {explicacao.length > 0 && (
-                      <p className="mt-2 leading-relaxed whitespace-pre-line text-ink/85 break-words">{explicacao.join('\n')}</p>
-                    )}
+                {atual.data.questao ? (
+                  <div className="mt-4">
+                    <p className="mb-3 text-xs text-muted">Questão {atual.data.questao.numero} do simulado, que você errou</p>
+                    <QuestaoVisao q={atual.data.questao} revelar={mostrando} />
                   </div>
+                ) : (
+                  <>
+                    <h2 className="mt-4 text-xl leading-snug font-bold text-pretty break-words sm:text-2xl">
+                      {atual.data.frente}
+                    </h2>
+
+                    {mostrando && (
+                      <div className="motion-safe:animate-revelar mt-6 border-t border-line pt-5">
+                        <p className="text-lg leading-snug font-bold break-words">{respostaDireta}</p>
+                        {explicacao.length > 0 && (
+                          <p className="mt-2 leading-relaxed whitespace-pre-line text-ink/85 break-words">
+                            {explicacao.join('\n')}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </article>
