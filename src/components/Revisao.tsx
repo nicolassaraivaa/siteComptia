@@ -8,6 +8,7 @@ import QuestaoVisao from './QuestaoVisao'
 
 type Props = {
   baralho: Baralho
+  dataProva: string | null
   userId: string
   progresso: ProgressoMap
   filtro: Filtro
@@ -43,7 +44,7 @@ function avancar(s: Sessao, now: Date, forcar = false): Sessao {
   return { ...s, atual: null }
 }
 
-export default function Revisao({ baralho, userId, progresso, filtro, onSalvo, onFim, onSair }: Props) {
+export default function Revisao({ baralho, dataProva, userId, progresso, filtro, onSalvo, onFim, onSair }: Props) {
   const [sessao, setSessao] = useState<Sessao>(() => {
     const now = new Date()
     const fila = montarFila(baralho, progresso, filtro, now)
@@ -86,9 +87,9 @@ export default function Revisao({ baralho, userId, progresso, filtro, onSalvo, o
   const mostrarResposta = useCallback(() => {
     if (!atual || mostrando) return
     const now = new Date()
-    setPreview({ now, cards: previa(atual.card ?? createEmptyCard(now), now) })
+    setPreview({ now, cards: previa(atual.card ?? createEmptyCard(now), now, dataProva) })
     setMostrando(true)
-  }, [atual, mostrando])
+  }, [atual, mostrando, dataProva])
 
   const salvar = useCallback(
     async (p: Salvamento) => {

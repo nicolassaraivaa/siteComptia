@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Card } from 'ts-fsrs'
+import DataProva from './components/DataProva'
 import Fim from './components/Fim'
 import Home from './components/Home'
 import Login from './components/Login'
@@ -13,6 +14,7 @@ import { CARDS } from './lib/cards'
 import { diaSP, montarBaralho, type Filtro } from './lib/fila'
 import type { Stats } from './lib/fsrs'
 import { calcularOfensiva, carregarDias, diasDoProgresso, registrarDia } from './lib/ofensiva'
+import { carregarPerfil, type Perfil } from './lib/perfil'
 import { carregarProgresso, type ProgressoMap } from './lib/progresso'
 import {
   cardsDeQuestoes,
@@ -25,7 +27,7 @@ import {
 } from './lib/questoes'
 import { supabase } from './lib/supabase'
 
-type Tela = 'home' | 'revisao' | 'fim' | 'simulado' | 'resultado'
+type Tela = 'home' | 'revisao' | 'fim' | 'simulado' | 'resultado' | 'data-prova'
 
 type SimuladoAtivo = { id: string; ciclo: number; questoes: Questao[]; respostas: Resposta[] }
 
@@ -42,6 +44,8 @@ export default function App() {
   const [respostas, setRespostas] = useState<Resposta[]>([])
   const [erroQuestoes, setErroQuestoes] = useState<string | null>(null)
   const [simulado, setSimulado] = useState<SimuladoAtivo | null>(null)
+  // undefined = carregando; null = primeiro acesso (sem perfil ainda)
+  const [perfil, setPerfil] = useState<Perfil | null | undefined>(undefined)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -55,39 +59,71 @@ export default function App() {
 
   const userId = session?.user.id
 
+  // Cada carregamento ganha um número; respostas de um carregamento antigo (ex.: conta que saiu) são descartadas
+  const geracao = useRef(0)
+
+  /** Zera tudo que pertence a uma conta, para nada vazar de um usuário para outro no mesmo navegador */
+  const limparConta = useCallback(() => {
+    geracao.current++ // invalida carregamentos em andamento da conta anterior
+    setProgresso(null)
+    setPerfil(undefined)
+    setQuestoes(null)
+    setRespostas([])
+    setErroQuestoes(null)
+    setSimulado(null)
+    setDias(new Set())
+    diasSalvos.current = new Set()
+    setTela('home')
+    setFiltro('todos')
+  }, [])
+
   const carregar = useCallback(() => {
+    const minha = ++geracao.current
+    const atual = () => minha === geracao.current
     setErroCarga(null)
     setProgresso(null)
+    setPerfil(undefined)
+    carregarPerfil()
+      .then((p) => atual() && setPerfil(p))
+      .catch((e: Error) => {
+        if (!atual()) return
+        // sem a tabela perfil o app segue funcionando, só sem cards pessoais e sem data da prova
+        console.warn('Perfil indisponível:', e.message)
+        setPerfil({ data_prova: null, cards_pessoais: false })
+      })
     const diasP = carregarDias().catch((e: Error) => {
       console.warn('Ofensiva indisponível:', e.message)
       return new Set<string>()
     })
     Promise.all([carregarProgresso(), diasP])
       .then(([prog, salvos]) => {
+        if (!atual()) return
         diasSalvos.current = salvos
         setDias(new Set([...salvos, ...diasDoProgresso(prog)]))
         setProgresso(prog)
       })
-      .catch((e: Error) => setErroCarga(e.message))
+      .catch((e: Error) => atual() && setErroCarga(e.message))
 
     // Simulado é opcional: se as tabelas ainda não existem, os flashcards continuam funcionando
     setErroQuestoes(null)
     Promise.all([carregarQuestoes(), carregarRespostas()])
       .then(([qs, rs]) => {
+        if (!atual()) return
         if (qs.length === 0) throw new Error('Nenhuma questão no banco. Rode os arquivos SQL do simulado.')
         setQuestoes(qs)
         setRespostas(rs)
       })
       .catch((e: Error) => {
+        if (!atual()) return
         console.warn('Simulado indisponível:', e.message)
         setErroQuestoes(`Simulado indisponível: ${e.message}`)
       })
   }, [])
 
   useEffect(() => {
+    limparConta()
     if (userId) carregar()
-    else setProgresso(null)
-  }, [userId, carregar])
+  }, [userId, carregar, limparConta])
 
   const onSalvo = useCallback(
     (cardId: string, card: Card, stats: Stats) => {
@@ -114,8 +150,13 @@ export default function App() {
 
   // Baralho = cards escritos à mão + questões erradas no simulado
   const baralho = useMemo(
-    () => montarBaralho([...CARDS, ...(questoes ? cardsDeQuestoes(questoes, respostas) : [])]),
-    [questoes, respostas],
+    () =>
+      montarBaralho([
+        // cards escritos à mão só aparecem na conta do dono (perfil.cards_pessoais)
+        ...(perfil?.cards_pessoais ? CARDS : []),
+        ...(questoes ? cardsDeQuestoes(questoes, respostas) : []),
+      ]),
+    [perfil, questoes, respostas],
   )
   const ciclo = useMemo(() => (questoes ? estadoCiclo(questoes, respostas) : null), [questoes, respostas])
 
@@ -150,7 +191,25 @@ export default function App() {
       </Centro>
     )
   }
-  if (!progresso) return <Centro>Carregando progresso…</Centro>
+  if (!progresso || perfil === undefined) return <Centro>Carregando progresso…</Centro>
+
+  const dataProva = perfil?.data_prova ?? null
+
+  if (perfil === null || tela === 'data-prova') {
+    const primeiroAcesso = perfil === null
+    return (
+      <DataProva
+        userId={userId}
+        atual={dataProva}
+        primeiroAcesso={primeiroAcesso}
+        onSalvo={(data) => {
+          setPerfil({ data_prova: data, cards_pessoais: perfil?.cards_pessoais ?? false })
+          setTela('home')
+        }}
+        onCancelar={primeiroAcesso ? undefined : () => setTela('home')}
+      />
+    )
+  }
 
   if (tela === 'simulado' && simulado) {
     return (
@@ -191,6 +250,7 @@ export default function App() {
     return (
       <Revisao
         baralho={baralho}
+        dataProva={dataProva}
         userId={userId}
         progresso={progresso}
         filtro={filtro}
@@ -208,6 +268,8 @@ export default function App() {
     <Home
       email={session.user.email ?? ''}
       baralho={baralho}
+      dataProva={dataProva}
+      onAlterarDataProva={() => setTela('data-prova')}
       simulado={
         <SimuladoCard
           total={questoes?.length ?? 0}

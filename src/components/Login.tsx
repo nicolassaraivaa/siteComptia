@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { DATA_PROVA_TEXTO } from '../config'
 import { supabase } from '../lib/supabase'
 
 type Modo = 'entrar' | 'criar' | 'recuperar'
@@ -86,7 +85,7 @@ export default function Login() {
           ? 'Crie sua conta para salvar o progresso.'
           : recuperando
             ? 'Informe seu email e enviaremos um link para criar uma nova senha.'
-            : `Revisão para a SY0-701, prova em ${DATA_PROVA_TEXTO}.`}
+            : 'Flashcards e simulados para a CompTIA Security+ SY0-701.'}
       </p>
 
       <form onSubmit={enviar} className="flex flex-col gap-4">

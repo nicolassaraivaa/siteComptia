@@ -1,12 +1,15 @@
 import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type Grade } from 'ts-fsrs'
-import { diasAteProva, FIM_DA_VESPERA } from './datas'
+import { diasAteProva, fimDaVespera } from './datas'
 
 /**
  * Intervalo máximo encolhe conforme a prova chega, para todo card voltar
  * várias vezes na reta final sem desperdiçar revisões agora.
+ * Sem data de prova (ou prova já passada), fica em 14 dias.
  */
-export function maximoDias(now: Date): number {
-  const faltam = diasAteProva(now)
+export function maximoDias(now: Date, dataProva: string | null): number {
+  if (!dataProva) return 14
+  const faltam = diasAteProva(now, dataProva)
+  if (faltam < 0) return 14
   if (faltam > 21) return 14
   if (faltam > 7) return 7
   return 3
@@ -24,15 +27,16 @@ export const f = fsrs(
 export const GRADES = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as const
 
 /**
- * f.repeat com teto rígido de maximoDias(now), e nada agendado para depois da
+ * f.repeat com teto rígido de maximoDias(), e nada agendado para depois da
  * véspera da prova. O teto é aplicado aqui porque o ts-fsrs força Hard < Good < Easy
  * depois de aplicar maximum_interval, e Good/Easy podem passar do limite.
  */
-export function previa(card: Card, now: Date): Record<Grade, Card> {
+export function previa(card: Card, now: Date, dataProva: string | null): Record<Grade, Card> {
   const log = f.repeat(card, now)
-  const dias = maximoDias(now)
+  const dias = maximoDias(now, dataProva)
   let teto = new Date(now.getTime() + dias * 86_400_000)
-  if (FIM_DA_VESPERA > now && FIM_DA_VESPERA < teto) teto = FIM_DA_VESPERA
+  const vespera = dataProva ? fimDaVespera(dataProva) : null
+  if (vespera && vespera > now && vespera < teto) teto = vespera
   const out = {} as Record<Grade, Card>
   for (const g of GRADES) {
     const c = log[g].card

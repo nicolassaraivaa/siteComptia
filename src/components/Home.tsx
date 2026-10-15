@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
-import { DATA_PROVA, DATA_PROVA_TEXTO, DOMINIO_COR, DOMINIOS } from '../config'
+import { DOMINIO_COR, DOMINIOS } from '../config'
 import type { Dominio } from '../lib/cards'
-import { diasEntre } from '../lib/datas'
+import { diasEntre, formatarDataProva } from '../lib/datas'
 import { diaSP, montarFila, type Baralho, type Filtro } from '../lib/fila'
 import type { Ofensiva } from '../lib/ofensiva'
 import type { ProgressoMap } from '../lib/progresso'
@@ -11,6 +11,8 @@ import OfensivaCard from './OfensivaCard'
 type Props = {
   email: string
   baralho: Baralho
+  dataProva: string | null
+  onAlterarDataProva: () => void
   simulado: React.ReactNode
   progresso: ProgressoMap
   ofensiva: Ofensiva
@@ -28,11 +30,11 @@ function acerto(revisoes: number, erros: number): number | null {
   return revisoes < MIN_REVISOES_ACERTO ? null : Math.round(((revisoes - erros) / revisoes) * 100)
 }
 
-export default function Home({ email, baralho, simulado, progresso, ofensiva, filtro, onFiltro, onComecar }: Props) {
+export default function Home({ email, baralho, dataProva, onAlterarDataProva, simulado, progresso, ofensiva, filtro, onFiltro, onComecar }: Props) {
   const now = new Date()
   const hoje = diaSP(now)
   const fila = montarFila(baralho, progresso, filtro, now)
-  const diasProva = diasEntre(hoje, DATA_PROVA)
+  const diasProva = dataProva ? diasEntre(hoje, dataProva) : null
 
   const contadores = [
     { label: 'Aprendendo', valor: fila.aprendizado.length },
@@ -85,10 +87,24 @@ export default function Home({ email, baralho, simulado, progresso, ofensiva, fi
       </header>
 
       <section className="rounded-3xl border border-line bg-surface p-5 sm:p-6">
-        <p className="text-sm text-muted">
-          {diasProva > 0 ? `Faltam para a prova (${DATA_PROVA_TEXTO})` : diasProva === 0 ? 'A prova é hoje' : 'Prova realizada'}
-        </p>
-        {diasProva > 0 && (
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="text-sm text-muted">
+            {dataProva === null || diasProva === null
+              ? 'Você ainda não marcou a data da prova'
+              : diasProva > 0
+                ? `Faltam para a prova (${formatarDataProva(dataProva)})`
+                : diasProva === 0
+                  ? 'A prova é hoje'
+                  : 'Prova realizada'}
+          </p>
+          <button
+            onClick={onAlterarDataProva}
+            className="foco shrink-0 rounded text-sm text-muted underline underline-offset-2 hover:text-ink"
+          >
+            {dataProva ? 'Alterar data' : 'Marcar data'}
+          </button>
+        </div>
+        {diasProva !== null && diasProva > 0 && (
           <p className="mt-1 flex items-baseline gap-2 leading-none">
             <span className="text-6xl font-extrabold tracking-tight tabular-nums">{diasProva}</span>
             <span className="text-xl font-bold">{diasProva === 1 ? 'dia' : 'dias'}</span>

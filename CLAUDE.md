@@ -2,6 +2,8 @@
 
 App de flashcards para a Security+ SY0-701 (prova em 21/11/2026). Cards em `src/data/cards.json`, progresso no Supabase.
 
+O app tem várias contas (amigos também usam). Os cards de `cards.json` são as minhas anotações e só aparecem na minha conta (`perfil.cards_pessoais = true`). Para todas as contas, as questões erradas no simulado viram flashcards automaticamente.
+
 ## Quando eu mandar erros de simulado ou anotações
 
 1. Leia `src/data/cards.json` inteiro antes de criar qualquer coisa, para evitar duplicatas.
