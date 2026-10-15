@@ -35,7 +35,7 @@ export default function DataProva({ userId, atual, primeiroAcesso, onSalvo, onCa
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4 py-10">
       <h1 className="text-3xl font-extrabold tracking-tight">
-        {primeiroAcesso ? 'Bem-vindo ao Sec+ Flashcards' : 'Data da prova'}
+        {primeiroAcesso ? 'Bem-vindo ao Sec+ SY0-701' : 'Data da prova'}
       </h1>
       <p className="mt-2 mb-8 text-muted">
         Quando é a sua prova? A data define a contagem regressiva e o ritmo das revisões: perto da prova, todos os cards

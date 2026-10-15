@@ -31,7 +31,7 @@ create policy "perfil_update_own" on public.perfil
 -- DONO: libera os cards pessoais e mantém a data da prova na sua conta.
 -- Troque o email pelo da sua conta antes de rodar.
 insert into public.perfil (user_id, data_prova, cards_pessoais)
-select id, '2026-11-21', true from auth.users where email = 'SEU_EMAIL_AQUI'
+select id, '2026-11-21', true from auth.users where email = 'nicolas.saraiva2005@gmail.com'
 on conflict (user_id) do update set cards_pessoais = true, data_prova = excluded.data_prova;
 
 -- Conferência: deve aparecer uma linha com cards_pessoais = true
