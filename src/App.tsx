@@ -7,7 +7,8 @@ import Home from './components/Home'
 import Login from './components/Login'
 import NovaSenha from './components/NovaSenha'
 import Revisao from './components/Revisao'
-import Simulado from './components/Simulado'
+import HistoricoProvas from './components/HistoricoProvas'
+import Simulado, { type EstadoSalvo, type InfoFinal } from './components/Simulado'
 import SimuladoCard from './components/SimuladoCard'
 import SimuladoResultado from './components/SimuladoResultado'
 import { CARDS } from './lib/cards'
@@ -18,18 +19,55 @@ import { carregarPerfil, type Perfil } from './lib/perfil'
 import { carregarProgresso, type ProgressoMap } from './lib/progresso'
 import {
   cardsDeQuestoes,
+  carregarProvas,
   carregarQuestoes,
   carregarRespostas,
   estadoCiclo,
+  PROVA_DURACAO_MS,
+  salvarProva,
   sortear,
+  sortearProva,
+  type Prova,
   type Questao,
+  type QuestaoDaProva,
   type Resposta,
 } from './lib/questoes'
 import { supabase } from './lib/supabase'
 
 type Tela = 'home' | 'revisao' | 'fim' | 'simulado' | 'resultado' | 'data-prova'
 
-type SimuladoAtivo = { id: string; ciclo: number; questoes: Questao[]; respostas: Resposta[] }
+type SimuladoAtivo = {
+  id: string
+  itens: QuestaoDaProva[]
+  /** Presente no simulado de prova (90 questões, 1h30) */
+  prova?: { iniciadaEm: number }
+  inicial?: EstadoSalvo
+  respostas: Resposta[]
+  info?: InfoFinal
+}
+
+/** Prova em andamento guardada no navegador para sobreviver a um recarregamento da página */
+type ProvaGuardada = { id: string; iniciadaEm: number; itens: { numero: number; ciclo: number }[]; estado: EstadoSalvo }
+
+const chaveProva = (userId: string) => `prova-em-andamento:${userId}`
+
+function lerProvaGuardada(userId: string): ProvaGuardada | null {
+  try {
+    const bruto = localStorage.getItem(chaveProva(userId))
+    return bruto ? (JSON.parse(bruto) as ProvaGuardada) : null
+  } catch {
+    return null
+  }
+}
+
+function guardarProva(userId: string, p: ProvaGuardada | null) {
+  try {
+    if (p) localStorage.setItem(chaveProva(userId), JSON.stringify(p))
+    else localStorage.removeItem(chaveProva(userId))
+  } catch {
+    // sem armazenamento local a prova só não é retomada após recarregar
+  }
+}
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
@@ -44,6 +82,7 @@ export default function App() {
   const [respostas, setRespostas] = useState<Resposta[]>([])
   const [erroQuestoes, setErroQuestoes] = useState<string | null>(null)
   const [simulado, setSimulado] = useState<SimuladoAtivo | null>(null)
+  const [provas, setProvas] = useState<Prova[] | null>(null)
   // undefined = carregando; null = primeiro acesso (sem perfil ainda)
   const [perfil, setPerfil] = useState<Perfil | null | undefined>(undefined)
 
@@ -71,6 +110,7 @@ export default function App() {
     setRespostas([])
     setErroQuestoes(null)
     setSimulado(null)
+    setProvas(null)
     setDias(new Set())
     diasSalvos.current = new Set()
     setTela('home')
@@ -103,6 +143,11 @@ export default function App() {
         setProgresso(prog)
       })
       .catch((e: Error) => atual() && setErroCarga(e.message))
+
+    // Histórico de provas é opcional (tabela provas)
+    carregarProvas()
+      .then((ps) => atual() && setProvas(ps))
+      .catch((e: Error) => console.warn('Histórico de provas indisponível:', e.message))
 
     // Simulado é opcional: se as tabelas ainda não existem, os flashcards continuam funcionando
     setErroQuestoes(null)
@@ -160,16 +205,86 @@ export default function App() {
   )
   const ciclo = useMemo(() => (questoes ? estadoCiclo(questoes, respostas) : null), [questoes, respostas])
 
-  const onRespondida = useCallback((r: Resposta) => {
-    setRespostas((rs) => [...rs.filter((x) => !(x.questao === r.questao && x.ciclo === r.ciclo)), r])
+  const mesclarRespostas = useCallback((novas: Resposta[]) => {
+    const chave = (r: Resposta) => `${r.questao}:${r.ciclo}`
+    const trocadas = new Set(novas.map(chave))
+    setRespostas((rs) => [...rs.filter((x) => !trocadas.has(chave(x))), ...novas])
   }, [])
+  const onRespondida = useCallback((r: Resposta) => mesclarRespostas([r]), [mesclarRespostas])
 
   function comecarSimulado(quantidade: number) {
     if (!questoes || !ciclo) return
     const porNumero = new Map(questoes.map((q) => [q.numero, q]))
-    const escolhidas = sortear(ciclo.restantes, quantidade).map((n) => porNumero.get(n)!)
-    setSimulado({ id: crypto.randomUUID(), ciclo: ciclo.ciclo, questoes: escolhidas, respostas: [] })
+    const itens = sortear(ciclo.restantes, quantidade).map((n) => ({ questao: porNumero.get(n)!, ciclo: ciclo.ciclo }))
+    setSimulado({ id: crypto.randomUUID(), itens, respostas: [] })
     setTela('simulado')
+    window.scrollTo({ top: 0 })
+  }
+
+  function comecarProva() {
+    if (!questoes || !ciclo || !userId) return
+    const itens = sortearProva(questoes, ciclo)
+    const id = crypto.randomUUID()
+    const iniciadaEm = Date.now()
+    guardarProva(userId, {
+      id,
+      iniciadaEm,
+      itens: itens.map((x) => ({ numero: x.questao.numero, ciclo: x.ciclo })),
+      estado: { idx: 0, marcadas: {} },
+    })
+    setSimulado({ id, itens, prova: { iniciadaEm }, respostas: [] })
+    setTela('simulado')
+    window.scrollTo({ top: 0 })
+  }
+
+  // Prova interrompida (página recarregada): retoma de onde parou, com o tempo que sobrou
+  const retomouProva = useRef(false)
+  useEffect(() => {
+    if (!questoes || !userId || retomouProva.current) return
+    retomouProva.current = true
+    const g = lerProvaGuardada(userId)
+    if (!g) return
+    const porNumero = new Map(questoes.map((q) => [q.numero, q]))
+    const itens = g.itens.flatMap((x) => {
+      const questao = porNumero.get(x.numero)
+      return questao ? [{ questao, ciclo: x.ciclo }] : []
+    })
+    if (itens.length === 0) return guardarProva(userId, null)
+    setSimulado({ id: g.id, itens, prova: { iniciadaEm: g.iniciadaEm }, inicial: g.estado, respostas: [] })
+    setTela('simulado')
+  }, [questoes, userId])
+
+  const onEstadoProva = useCallback(
+    (estado: EstadoSalvo) => {
+      if (!userId || !simulado?.prova) return
+      guardarProva(userId, {
+        id: simulado.id,
+        iniciadaEm: simulado.prova.iniciadaEm,
+        itens: simulado.itens.map((x) => ({ numero: x.questao.numero, ciclo: x.ciclo })),
+        estado,
+      })
+    },
+    [userId, simulado],
+  )
+
+  function finalizarSimulado(rs: Resposta[], info: InfoFinal) {
+    if (!simulado || !userId) return
+    mesclarRespostas(rs)
+    if (simulado.prova) {
+      guardarProva(userId, null)
+      const registro: Prova = {
+        id: simulado.id,
+        iniciada_em: new Date(simulado.prova.iniciadaEm).toISOString(),
+        finalizada_em: new Date().toISOString(),
+        tempo_usado_s: info.tempoUsadoS,
+        total: simulado.itens.length,
+        em_branco: info.emBranco,
+      }
+      setProvas((ps) => (ps ? [registro, ...ps.filter((p) => p.id !== registro.id)] : ps))
+      salvarProva(userId, registro).catch((e: Error) => console.warn('Falha ao salvar histórico da prova:', e.message))
+    }
+    setSimulado({ ...simulado, respostas: rs, info })
+    setTela('resultado')
     window.scrollTo({ top: 0 })
   }
 
@@ -214,16 +329,15 @@ export default function App() {
   if (tela === 'simulado' && simulado) {
     return (
       <Simulado
+        key={simulado.id}
         userId={userId}
-        questoes={simulado.questoes}
-        ciclo={simulado.ciclo}
+        itens={simulado.itens}
         simuladoId={simulado.id}
+        prova={simulado.prova}
+        inicial={simulado.inicial}
+        onEstado={simulado.prova ? onEstadoProva : undefined}
         onRespondida={onRespondida}
-        onFinalizar={(rs) => {
-          setSimulado({ ...simulado, respostas: rs })
-          setTela('resultado')
-          window.scrollTo({ top: 0 })
-        }}
+        onFinalizar={finalizarSimulado}
         onSair={() => {
           setSimulado(null)
           setTela('home')
@@ -235,8 +349,9 @@ export default function App() {
     return (
       <SimuladoResultado
         userId={userId}
-        questoes={simulado.questoes}
+        questoes={simulado.itens.map((x) => x.questao)}
         respostas={simulado.respostas}
+        prova={simulado.prova && simulado.info ? { ...simulado.info, duracaoS: PROVA_DURACAO_MS / 1000 } : undefined}
         onAtualizada={onRespondida}
         onVoltar={() => {
           setSimulado(null)
@@ -276,8 +391,10 @@ export default function App() {
           estado={ciclo}
           indisponivel={erroQuestoes}
           onComecar={comecarSimulado}
+          onComecarProva={comecarProva}
         />
       }
+      historico={provas && provas.length > 0 ? <HistoricoProvas provas={provas} respostas={respostas} /> : null}
       progresso={progresso}
       ofensiva={ofensiva}
       filtro={filtro}

@@ -64,6 +64,17 @@ export async function carregarRespostas(): Promise<Resposta[]> {
   return todas
 }
 
+export async function salvarRespostas(userId: string, rs: Resposta[]): Promise<void> {
+  if (rs.length === 0) return
+  const { error } = await supabase
+    .from('simulado_respostas')
+    .upsert(
+      rs.map((r) => ({ user_id: userId, ...r })),
+      { onConflict: 'user_id,questao,ciclo' },
+    )
+  if (error) throw error
+}
+
 export async function salvarResposta(userId: string, r: Resposta): Promise<void> {
   const { error } = await supabase
     .from('simulado_respostas')
@@ -146,4 +157,108 @@ export function cardsDeQuestoes(questoes: Questao[], respostas: Resposta[]): Car
     })
   }
   return cards
+}
+
+// ---------------------------------------------------------------------------
+// Simulado de prova: 90 questões, 1h30, distribuídas pelos pesos oficiais
+
+export const PROVA_QUESTOES = 90
+export const PROVA_DURACAO_MS = 90 * 60 * 1000
+
+/** Pesos oficiais da SY0-701 por domínio */
+const PESOS: Record<Dominio, number> = { '1.0': 12, '2.0': 22, '3.0': 18, '4.0': 28, '5.0': 20 }
+
+/** Quantas questões de cada domínio numa prova de n questões (maiores restos): 11, 20, 16, 25, 18 para 90 */
+export function cotasPorDominio(n: number): Record<Dominio, number> {
+  const dominios = Object.keys(PESOS) as Dominio[]
+  const exatas = dominios.map((d) => ({ d, v: (PESOS[d] * n) / 100 }))
+  const cotas = Object.fromEntries(exatas.map(({ d, v }) => [d, Math.floor(v)])) as Record<Dominio, number>
+  let falta = n - Object.values(cotas).reduce((s, x) => s + x, 0)
+  for (const { d } of [...exatas].sort((a, b) => b.v - Math.floor(b.v) - (a.v - Math.floor(a.v)))) {
+    if (falta-- <= 0) break
+    cotas[d]++
+  }
+  return cotas
+}
+
+/**
+ * Escolhe questões de um conjunto respeitando as cotas por domínio; se um domínio
+ * não tiver questões suficientes, a diferença vem dos outros domínios do mesmo conjunto.
+ */
+function escolherPorCota(disponiveis: Questao[], n: number, cotas: Record<Dominio, number>): Questao[] {
+  const escolhidas: Questao[] = []
+  const usadas = new Set<number>()
+  for (const d of Object.keys(cotas) as Dominio[]) {
+    for (const q of sortear(disponiveis.filter((q) => q.dominio === d), cotas[d])) {
+      escolhidas.push(q)
+      usadas.add(q.numero)
+    }
+  }
+  if (escolhidas.length < n) {
+    escolhidas.push(...sortear(disponiveis.filter((q) => !usadas.has(q.numero)), n - escolhidas.length))
+  }
+  return escolhidas.slice(0, n)
+}
+
+export type QuestaoDaProva = { questao: Questao; ciclo: number }
+
+/**
+ * Monta as 90 questões da prova. Usa primeiro as questões ainda não feitas no ciclo atual.
+ * Se faltarem, completa com questões do próximo ciclo (que não incluem nenhuma das ineditas
+ * já escolhidas), e essas já contam como feitas no próximo ciclo.
+ */
+export function sortearProva(questoes: Questao[], estado: EstadoCiclo): QuestaoDaProva[] {
+  const n = Math.min(PROVA_QUESTOES, questoes.length)
+  const ineditas = questoes.filter((q) => !estado.vistas.has(q.numero))
+  const cotas = cotasPorDominio(n)
+
+  if (ineditas.length >= n) {
+    return sortear(escolherPorCota(ineditas, n, cotas), n).map((questao) => ({ questao, ciclo: estado.ciclo }))
+  }
+
+  // Todas as ineditas entram; o resto vem do próximo ciclo, cobrindo primeiro os domínios que ficaram abaixo da cota
+  const doCiclo = ineditas
+  const faltam = n - doCiclo.length
+  const restante = { ...cotas }
+  for (const q of doCiclo) restante[q.dominio] = Math.max(0, restante[q.dominio] - 1)
+  const somaRestante = Object.values(restante).reduce((s, x) => s + x, 0)
+  // ajusta as cotas restantes para somarem exatamente "faltam"
+  const cotasProximo = somaRestante === faltam ? restante : cotasPorDominio(faltam)
+  const jaEscolhidas = new Set(doCiclo.map((q) => q.numero))
+  const proximo = escolherPorCota(
+    questoes.filter((q) => !jaEscolhidas.has(q.numero)),
+    faltam,
+    cotasProximo,
+  )
+  return sortear(
+    [
+      ...doCiclo.map((questao) => ({ questao, ciclo: estado.ciclo })),
+      ...proximo.map((questao) => ({ questao, ciclo: estado.ciclo + 1 })),
+    ],
+    n,
+  )
+}
+
+/** Uma prova concluída (o placar vem das respostas com o mesmo simulado_id) */
+export type Prova = {
+  id: string
+  iniciada_em: string
+  finalizada_em: string
+  tempo_usado_s: number
+  total: number
+  em_branco: number
+}
+
+export async function carregarProvas(): Promise<Prova[]> {
+  const { data, error } = await supabase
+    .from('provas')
+    .select('id, iniciada_em, finalizada_em, tempo_usado_s, total, em_branco')
+    .order('finalizada_em', { ascending: false })
+  if (error) throw error
+  return data as Prova[]
+}
+
+export async function salvarProva(userId: string, p: Prova): Promise<void> {
+  const { error } = await supabase.from('provas').upsert({ user_id: userId, ...p }, { onConflict: 'id' })
+  if (error) throw error
 }

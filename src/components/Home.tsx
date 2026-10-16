@@ -15,6 +15,7 @@ type Props = {
   dataProva: string | null
   onAlterarDataProva: () => void
   simulado: ReactNode
+  historico?: ReactNode
   progresso: ProgressoMap
   ofensiva: Ofensiva
   filtro: Filtro
@@ -47,6 +48,7 @@ export default function Home({
   dataProva,
   onAlterarDataProva,
   simulado,
+  historico,
   progresso,
   ofensiva,
   filtro,
@@ -181,6 +183,8 @@ export default function Home({
           {simulado}
         </div>
       </section>
+
+      {historico}
 
       {/* Desempenho: leitura, não ação */}
       <section aria-labelledby="desempenho-titulo" className="mt-10">

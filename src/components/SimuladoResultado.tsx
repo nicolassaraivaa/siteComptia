@@ -10,6 +10,17 @@ type Props = {
   respostas: Resposta[]
   onAtualizada: (r: Resposta) => void
   onVoltar: () => void
+  /** Presente no simulado de prova */
+  prova?: { tempoUsadoS: number; duracaoS: number; emBranco: number; brancos: number[]; porTempo: boolean }
+}
+
+/** Acerto a partir do qual consideramos "zona segura" (não é a nota oficial de 100 a 900) */
+export const ZONA_SEGURA = 85
+
+function formatarDuracao(s: number) {
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  return h > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${m} min`
 }
 
 const ROTULO: Record<Resultado, string> = {
@@ -26,7 +37,7 @@ const COR: Record<Resultado, string> = {
   pendente: 'var(--muted)',
 }
 
-export default function SimuladoResultado({ userId, questoes, respostas: iniciais, onAtualizada, onVoltar }: Props) {
+export default function SimuladoResultado({ userId, questoes, respostas: iniciais, onAtualizada, onVoltar, prova }: Props) {
   const [respostas, setRespostas] = useState(iniciais)
   const [erro, setErro] = useState<string | null>(null)
   const porQuestao = new Map(questoes.map((q) => [q.numero, q]))
@@ -60,7 +71,7 @@ export default function SimuladoResultado({ userId, questoes, respostas: iniciai
 
   return (
     <main className="mx-auto max-w-xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))]">
-      <h1 className="mt-4 text-sm text-muted">Resultado do simulado</h1>
+      <h1 className="mt-4 text-sm text-muted">{prova ? 'Resultado do simulado de prova' : 'Resultado do simulado'}</h1>
 
       <section className="mt-2 rounded-3xl border border-line bg-surface p-5 sm:p-6">
         <p className="flex items-baseline gap-2 leading-none">
@@ -70,6 +81,27 @@ export default function SimuladoResultado({ userId, questoes, respostas: iniciai
         <p className="mt-2 text-muted tabular-nums">
           {certas} de {corrigidas.length} {corrigidas.length === 1 ? 'questão' : 'questões'}
         </p>
+        {prova && (
+          <div className="mt-4 flex flex-col gap-2">
+            <p
+              className="rounded-xl p-3 text-sm font-medium"
+              style={{
+                background: `color-mix(in srgb, ${pct >= ZONA_SEGURA ? 'var(--good)' : 'var(--d4)'} 14%, var(--surface))`,
+              }}
+            >
+              {pct >= ZONA_SEGURA
+                ? `Zona segura: ${ZONA_SEGURA}% ou mais de acerto.`
+                : `Abaixo da zona segura (${ZONA_SEGURA}%). Faltaram ${Math.ceil((ZONA_SEGURA / 100) * corrigidas.length) - certas} acertos.`}{' '}
+              <span className="font-normal text-muted">Referência de estudo, não é a nota oficial (100 a 900).</span>
+            </p>
+            <p className="text-sm text-muted tabular-nums">
+              {prova.porTempo ? 'Tempo esgotado' : `Tempo usado: ${formatarDuracao(prova.tempoUsadoS)} de ${formatarDuracao(prova.duracaoS)}`}
+              {prova.emBranco > 0 &&
+                `. ${prova.emBranco} ${prova.emBranco === 1 ? 'questão em branco contou' : 'questões em branco contaram'} como erro`}
+              .
+            </p>
+          </div>
+        )}
         <dl className="mt-5 grid grid-cols-3 gap-2 border-t border-line pt-4 text-center">
           {[
             { label: 'Acertos', valor: certas, cor: 'var(--good)' },
@@ -154,7 +186,7 @@ export default function SimuladoResultado({ userId, questoes, respostas: iniciai
                     <span className="w-6 text-sm text-muted tabular-nums">{i + 1}</span>
                     <span className="min-w-0 flex-1 truncate text-sm">{q.enunciado_pt}</span>
                     <span className="shrink-0 text-xs font-bold" style={{ color: COR[r.resultado] }}>
-                      {ROTULO[r.resultado]}
+                      {prova?.brancos.includes(r.questao) ? 'Em branco' : ROTULO[r.resultado]}
                     </span>
                   </summary>
                   <div className="px-4">
@@ -163,7 +195,7 @@ export default function SimuladoResultado({ userId, questoes, respostas: iniciai
                       {errou(r.resultado) && ' · foi para os flashcards'}
                     </p>
                     <QuestaoVisao q={q} marcadas={r.marcadas} revelar />
-                    {q.tipo === 'simulacao' && (
+                    {q.tipo === 'simulacao' && !prova?.brancos.includes(q.numero) && (
                       <div className="mt-4 flex gap-2">
                         <button
                           onClick={() => void autocorrigir(r, true)}
