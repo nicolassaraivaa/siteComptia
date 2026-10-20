@@ -27,3 +27,10 @@ const fmtDataLonga = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: '
 export function formatarDataProva(dataProva: string): string {
   return fmtDataLonga.format(new Date(`${dataProva}T12:00:00Z`))
 }
+
+/** Soma (ou subtrai) dias corridos de uma data YYYY-MM-DD */
+export function somarDias(dia: string, n: number): string {
+  const d = new Date(`${dia}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + n)
+  return d.toISOString().slice(0, 10)
+}

@@ -10,8 +10,12 @@ type Props = {
   respostas: Resposta[]
   onAtualizada: (r: Resposta) => void
   onVoltar: () => void
+  /** Questões que ficaram em branco (contaram como erradas) */
+  brancos?: number[]
+  /** Aberto pelo histórico: muda o título e o botão de voltar */
+  doHistorico?: { titulo: string }
   /** Presente no simulado de prova */
-  prova?: { tempoUsadoS: number; duracaoS: number; emBranco: number; brancos: number[]; porTempo: boolean }
+  prova?: { tempoUsadoS: number; duracaoS: number; emBranco: number; porTempo: boolean }
 }
 
 /** Acerto a partir do qual consideramos "zona segura" (não é a nota oficial de 100 a 900) */
@@ -37,7 +41,16 @@ const COR: Record<Resultado, string> = {
   pendente: 'var(--muted)',
 }
 
-export default function SimuladoResultado({ userId, questoes, respostas: iniciais, onAtualizada, onVoltar, prova }: Props) {
+export default function SimuladoResultado({
+  userId,
+  questoes,
+  respostas: iniciais,
+  onAtualizada,
+  onVoltar,
+  doHistorico,
+  brancos = [],
+  prova,
+}: Props) {
   const [respostas, setRespostas] = useState(iniciais)
   const [erro, setErro] = useState<string | null>(null)
   const porQuestao = new Map(questoes.map((q) => [q.numero, q]))
@@ -71,7 +84,18 @@ export default function SimuladoResultado({ userId, questoes, respostas: iniciai
 
   return (
     <main className="mx-auto max-w-xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))]">
-      <h1 className="mt-4 text-sm text-muted">{prova ? 'Resultado do simulado de prova' : 'Resultado do simulado'}</h1>
+      {doHistorico && (
+        <button
+          onClick={onVoltar}
+          className="foco -ml-2 flex items-center gap-1.5 rounded-full px-2 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+        >
+          <span aria-hidden="true">←</span> Histórico
+        </button>
+      )}
+      <h1 className="mt-4 text-sm text-muted">
+        {prova ? 'Resultado do simulado de prova' : 'Resultado do simulado'}
+        {doHistorico && ` · ${doHistorico.titulo}`}
+      </h1>
 
       <section className="mt-2 rounded-3xl border border-line bg-surface p-5 sm:p-6">
         <p className="flex items-baseline gap-2 leading-none">
@@ -116,7 +140,12 @@ export default function SimuladoResultado({ userId, questoes, respostas: iniciai
             </div>
           ))}
         </dl>
-        {erradas + parciais > 0 && (
+        {!prova && brancos.length > 0 && (
+          <p className="mt-4 text-sm text-muted tabular-nums">
+            {brancos.length} {brancos.length === 1 ? 'questão em branco contou' : 'questões em branco contaram'} como erro.
+          </p>
+        )}
+        {erradas + parciais > 0 && !doHistorico && (
           <p className="mt-4 rounded-xl bg-surface-2 p-3 text-sm">
             {erradas + parciais} {erradas + parciais === 1 ? 'questão foi' : 'questões foram'} para os flashcards e
             {erradas + parciais === 1 ? ' entra' : ' entram'} na sua revisão.
@@ -186,7 +215,7 @@ export default function SimuladoResultado({ userId, questoes, respostas: iniciai
                     <span className="w-6 text-sm text-muted tabular-nums">{i + 1}</span>
                     <span className="min-w-0 flex-1 truncate text-sm">{q.enunciado_pt}</span>
                     <span className="shrink-0 text-xs font-bold" style={{ color: COR[r.resultado] }}>
-                      {prova?.brancos.includes(r.questao) ? 'Em branco' : ROTULO[r.resultado]}
+                      {brancos.includes(r.questao) ? 'Em branco' : ROTULO[r.resultado]}
                     </span>
                   </summary>
                   <div className="px-4">
@@ -195,7 +224,7 @@ export default function SimuladoResultado({ userId, questoes, respostas: iniciai
                       {errou(r.resultado) && ' · foi para os flashcards'}
                     </p>
                     <QuestaoVisao q={q} marcadas={r.marcadas} revelar />
-                    {q.tipo === 'simulacao' && !prova?.brancos.includes(q.numero) && (
+                    {q.tipo === 'simulacao' && !brancos.includes(q.numero) && (
                       <div className="mt-4 flex gap-2">
                         <button
                           onClick={() => void autocorrigir(r, true)}
@@ -225,7 +254,7 @@ export default function SimuladoResultado({ userId, questoes, respostas: iniciai
         onClick={onVoltar}
         className="foco mt-8 w-full rounded-2xl bg-primary py-4 text-lg font-bold text-on-primary transition-opacity hover:opacity-90"
       >
-        Voltar ao início
+        {doHistorico ? 'Voltar ao histórico' : 'Voltar ao início'}
       </button>
     </main>
   )

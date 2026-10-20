@@ -1,8 +1,9 @@
 import type { Session } from '@supabase/supabase-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { Card } from 'ts-fsrs'
+import type { Card, Grade } from 'ts-fsrs'
 import DataProva from './components/DataProva'
 import Fim from './components/Fim'
+import Historico from './components/Historico'
 import Home from './components/Home'
 import Login from './components/Login'
 import NovaSenha from './components/NovaSenha'
@@ -14,9 +15,11 @@ import SimuladoResultado from './components/SimuladoResultado'
 import { CARDS } from './lib/cards'
 import { diaSP, montarBaralho, type Filtro } from './lib/fila'
 import type { Stats } from './lib/fsrs'
+import { carregarCardsPorDia, type CardsPorDia } from './lib/historico'
 import { calcularOfensiva, carregarDias, diasDoProgresso, registrarDia } from './lib/ofensiva'
 import { carregarPerfil, type Perfil } from './lib/perfil'
 import { carregarProgresso, type ProgressoMap } from './lib/progresso'
+import { lerRevisaoGuardada } from './lib/sessaoRevisao'
 import {
   cardsDeQuestoes,
   carregarProvas,
@@ -34,7 +37,7 @@ import {
 } from './lib/questoes'
 import { supabase } from './lib/supabase'
 
-type Tela = 'home' | 'revisao' | 'fim' | 'simulado' | 'resultado' | 'data-prova'
+type Tela = 'home' | 'revisao' | 'fim' | 'simulado' | 'resultado' | 'data-prova' | 'historico' | 'historico-simulado'
 
 type SimuladoAtivo = {
   id: string
@@ -83,6 +86,10 @@ export default function App() {
   const [erroQuestoes, setErroQuestoes] = useState<string | null>(null)
   const [simulado, setSimulado] = useState<SimuladoAtivo | null>(null)
   const [provas, setProvas] = useState<Prova[] | null>(null)
+  // null = indisponível (tabela revisoes ainda não criada)
+  const [cardsPorDia, setCardsPorDia] = useState<CardsPorDia | null>(null)
+  const [fimHistorico, setFimHistorico] = useState(() => diaSP(new Date()))
+  const [simuladoAberto, setSimuladoAberto] = useState<string | null>(null)
   // undefined = carregando; null = primeiro acesso (sem perfil ainda)
   const [perfil, setPerfil] = useState<Perfil | null | undefined>(undefined)
 
@@ -100,6 +107,9 @@ export default function App() {
 
   // Cada carregamento ganha um número; respostas de um carregamento antigo (ex.: conta que saiu) são descartadas
   const geracao = useRef(0)
+  // Retomada após recarregar a página: só acontece uma vez por login
+  const retomouProva = useRef(false)
+  const [revisaoDecidida, setRevisaoDecidida] = useState(false)
 
   /** Zera tudo que pertence a uma conta, para nada vazar de um usuário para outro no mesmo navegador */
   const limparConta = useCallback(() => {
@@ -111,6 +121,9 @@ export default function App() {
     setErroQuestoes(null)
     setSimulado(null)
     setProvas(null)
+    setCardsPorDia(null)
+    retomouProva.current = false
+    setRevisaoDecidida(false)
     setDias(new Set())
     diasSalvos.current = new Set()
     setTela('home')
@@ -144,6 +157,11 @@ export default function App() {
       })
       .catch((e: Error) => atual() && setErroCarga(e.message))
 
+    // Histórico por dia é opcional (tabela revisoes)
+    carregarCardsPorDia()
+      .then((m) => atual() && setCardsPorDia(m))
+      .catch((e: Error) => console.warn('Histórico de cards indisponível:', e.message))
+
     // Histórico de provas é opcional (tabela provas)
     carregarProvas()
       .then((ps) => atual() && setProvas(ps))
@@ -171,8 +189,14 @@ export default function App() {
   }, [userId, carregar, limparConta])
 
   const onSalvo = useCallback(
-    (cardId: string, card: Card, stats: Stats) => {
+    (cardId: string, card: Card, stats: Stats, nota: Grade) => {
       const now = new Date()
+      const dia = diaSP(now)
+      setCardsPorDia((m) => {
+        if (!m) return m
+        const d = m.get(dia) ?? { cards: 0, erros: 0 }
+        return new Map(m).set(dia, { cards: d.cards + 1, erros: d.erros + (nota === 1 ? 1 : 0) })
+      })
       setProgresso((prev) => {
         const next = new Map(prev)
         next.set(cardId, { card, createdAt: prev?.get(cardId)?.createdAt ?? now, updatedAt: now, stats })
@@ -238,7 +262,6 @@ export default function App() {
   }
 
   // Prova interrompida (página recarregada): retoma de onde parou, com o tempo que sobrou
-  const retomouProva = useRef(false)
   useEffect(() => {
     if (!questoes || !userId || retomouProva.current) return
     retomouProva.current = true
@@ -253,6 +276,19 @@ export default function App() {
     setSimulado({ id: g.id, itens, prova: { iniciadaEm: g.iniciadaEm }, inicial: g.estado, respostas: [] })
     setTela('simulado')
   }, [questoes, userId])
+
+  // Revisão de flashcards interrompida: volta para ela, no mesmo card.
+  // Espera as questões (ou o erro delas) porque as questões erradas também são cards.
+  useEffect(() => {
+    if (!userId || revisaoDecidida || !progresso || perfil === undefined) return
+    if (!questoes && !erroQuestoes) return
+    setRevisaoDecidida(true)
+    if (lerProvaGuardada(userId)) return // a prova em andamento tem prioridade
+    const g = lerRevisaoGuardada(userId)
+    if (!g) return
+    setFiltro(g.filtro)
+    setTela('revisao')
+  }, [userId, revisaoDecidida, progresso, perfil, questoes, erroQuestoes])
 
   const onEstadoProva = useCallback(
     (estado: EstadoSalvo) => {
@@ -308,6 +344,9 @@ export default function App() {
   }
   if (!progresso || perfil === undefined) return <Centro>Carregando progresso…</Centro>
 
+  // enquanto decide se volta para uma revisão interrompida, não mostra a home por um instante
+  if (tela === 'home' && !revisaoDecidida && lerRevisaoGuardada(userId)) return <Centro>Carregando…</Centro>
+
   const dataProva = perfil?.data_prova ?? null
 
   if (perfil === null || tela === 'data-prova') {
@@ -351,6 +390,7 @@ export default function App() {
         userId={userId}
         questoes={simulado.itens.map((x) => x.questao)}
         respostas={simulado.respostas}
+        brancos={simulado.info?.brancos}
         prova={simulado.prova && simulado.info ? { ...simulado.info, duracaoS: PROVA_DURACAO_MS / 1000 } : undefined}
         onAtualizada={onRespondida}
         onVoltar={() => {
@@ -375,6 +415,61 @@ export default function App() {
       />
     )
   }
+  if (tela === 'historico-simulado' && simuladoAberto) {
+    const doSimulado = respostas
+      .filter((r) => r.simulado_id === simuladoAberto)
+      .sort((a, b) => a.respondida_em.localeCompare(b.respondida_em))
+    const porNumero = new Map((questoes ?? []).map((q) => [q.numero, q]))
+    const registro = provas?.find((p) => p.id === simuladoAberto)
+    const duracaoS = PROVA_DURACAO_MS / 1000
+    const inicio = doSimulado[0] ? new Date(doSimulado[0].respondida_em) : new Date()
+    return (
+      <SimuladoResultado
+        key={simuladoAberto}
+        userId={userId}
+        questoes={doSimulado.flatMap((r) => porNumero.get(r.questao) ?? [])}
+        respostas={doSimulado}
+        doHistorico={{
+          titulo: inicio.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }),
+        }}
+        // em branco = contou como erro sem nenhuma alternativa marcada
+        // (simulações não guardam alternativas, então não dá para saber se ficaram em branco)
+        brancos={doSimulado
+          .filter((r) => r.resultado === 'errada' && r.marcadas.length === 0 && porNumero.get(r.questao)?.tipo !== 'simulacao')
+          .map((r) => r.questao)}
+        prova={
+          registro && {
+            tempoUsadoS: registro.tempo_usado_s,
+            duracaoS,
+            emBranco: registro.em_branco,
+            porTempo: registro.tempo_usado_s >= duracaoS,
+          }
+        }
+        onAtualizada={onRespondida}
+        onVoltar={() => {
+          setSimuladoAberto(null)
+          setTela('historico')
+        }}
+      />
+    )
+  }
+  if (tela === 'historico') {
+    return (
+      <Historico
+        respostas={respostas}
+        cardsPorDia={cardsPorDia}
+        provas={new Set(provas?.map((p) => p.id))}
+        fim={fimHistorico}
+        onFim={setFimHistorico}
+        onAbrirSimulado={(id) => {
+          setSimuladoAberto(id)
+          setTela('historico-simulado')
+          window.scrollTo({ top: 0 })
+        }}
+        onVoltar={() => setTela('home')}
+      />
+    )
+  }
   if (tela === 'fim') {
     return <Fim baralho={baralho} progresso={progresso} filtro={filtro} ofensiva={ofensiva} onVoltar={() => setTela('home')} />
   }
@@ -385,6 +480,10 @@ export default function App() {
       baralho={baralho}
       dataProva={dataProva}
       onAlterarDataProva={() => setTela('data-prova')}
+      onHistorico={() => {
+        setTela('historico')
+        window.scrollTo({ top: 0 })
+      }}
       simulado={
         <SimuladoCard
           total={questoes?.length ?? 0}

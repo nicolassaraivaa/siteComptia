@@ -124,8 +124,8 @@ export default function Simulado({
   }
 
   /**
-   * Corrige e grava tudo de uma vez. No simulado normal, questões em branco não contam;
-   * na prova, contam como erradas (e vão para os flashcards), como na prova real.
+   * Corrige e grava tudo de uma vez. Questões em branco contam como erradas (e vão para os
+   * flashcards), tanto no simulado normal quanto na prova, como na prova real.
    */
   const finalizar = useCallback(
     async (porTempo: boolean) => {
@@ -145,7 +145,7 @@ export default function Simulado({
             resultado: corrigir(questao, letras),
             respondida_em: salvas[questao.numero]?.respondida_em ?? agoraIso,
           })
-        } else if (prova) {
+        } else {
           respostas.push({
             questao: questao.numero,
             ciclo: c,
@@ -325,9 +325,7 @@ export default function Simulado({
           <div className="mt-4 rounded-2xl border border-line bg-surface p-4">
             <p className="text-sm">
               {emBranco} {emBranco === 1 ? 'questão ficou' : 'questões ficaram'} em branco.{' '}
-              {prova
-                ? 'Na prova, questões em branco contam como erradas e vão para os flashcards.'
-                : 'Elas não contam na nota e continuam no sorteio deste ciclo.'}
+              Questões em branco contam como erradas e vão para os flashcards.
             </p>
             <button
               onClick={() => void pedirFinalizar(true)}

@@ -14,6 +14,7 @@ type Props = {
   baralho: Baralho
   dataProva: string | null
   onAlterarDataProva: () => void
+  onHistorico: () => void
   simulado: ReactNode
   historico?: ReactNode
   progresso: ProgressoMap
@@ -47,6 +48,7 @@ export default function Home({
   baralho,
   dataProva,
   onAlterarDataProva,
+  onHistorico,
   simulado,
   historico,
   progresso,
@@ -98,7 +100,16 @@ export default function Home({
     <div className="mx-auto max-w-5xl px-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(3rem,env(safe-area-inset-bottom))] sm:px-6">
       <header className="flex items-center justify-between gap-3 py-4">
         <p className="text-lg font-extrabold tracking-tight">Sec+ SY0-701</p>
-        <MenuConta email={email} onAlterarDataProva={onAlterarDataProva} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onHistorico}
+            className="foco flex items-center gap-2 rounded-full border border-line bg-surface py-1.5 pr-3.5 pl-3 text-sm font-medium transition-colors hover:bg-surface-2"
+          >
+            <IconeHistorico />
+            Histórico
+          </button>
+          <MenuConta email={email} onAlterarDataProva={onAlterarDataProva} />
+        </div>
       </header>
 
       {/* Situação: prova e ofensiva, em texto, sem competir com as ações */}
@@ -291,5 +302,13 @@ function LinhaDominio({ cor, numero, nome, total, pendentes, feitosHoje, acerto,
         <span className="block text-xs text-muted sm:hidden">acerto</span>
       </span>
     </li>
+  )
+}
+
+function IconeHistorico() {
+  return (
+    <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M3.5 16.5V9.5M8.5 16.5V4.5M13.5 16.5v-5M17 16.5H2.5" strokeLinecap="round" />
+    </svg>
   )
 }

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { createEmptyCard, type Card, type Grade } from 'ts-fsrs'
 import { DOMINIO_COR, DOMINIOS } from '../config'
-import { montarFila, type Baralho, type Filtro, type ItemFila } from '../lib/fila'
+import { diaSP, montarFila, passaFiltro, type Baralho, type Filtro, type ItemFila } from '../lib/fila'
 import { BOTOES, emAprendizado, formatIntervalo, previa, somarStats, type Stats } from '../lib/fsrs'
+import { registrarRevisao } from '../lib/historico'
 import { salvarProgresso, type ProgressoMap } from '../lib/progresso'
+import { guardarRevisao, lerRevisaoGuardada } from '../lib/sessaoRevisao'
 import QuestaoVisao from './QuestaoVisao'
 
 type Props = {
@@ -12,12 +14,12 @@ type Props = {
   userId: string
   progresso: ProgressoMap
   filtro: Filtro
-  onSalvo: (cardId: string, card: Card, stats: Stats) => void
+  onSalvo: (cardId: string, card: Card, stats: Stats, nota: Grade) => void
   onFim: () => void
   onSair: () => void
 }
 
-type Salvamento = { item: ItemFila; card: Card; stats: Stats }
+type Salvamento = { item: ItemFila; card: Card; stats: Stats; nota: Grade }
 
 type Aprendendo = { data: ItemFila['data']; card: Card }
 
@@ -44,22 +46,52 @@ function avancar(s: Sessao, now: Date, forcar = false): Sessao {
   return { ...s, atual: null }
 }
 
+/**
+ * Monta a sessão a partir da fila. Se a página foi recarregada no meio de uma revisão,
+ * continua de onde parou: mesmo card na tela, mesma contagem e os cards em aprendizado que iam voltar.
+ */
+function sessaoInicial(baralho: Baralho, progresso: ProgressoMap, filtro: Filtro, userId: string, now: Date) {
+  const fila = montarFila(baralho, progresso, filtro, now)
+  const principal = [...fila.revisoes, ...fila.novosSimulado, ...fila.novosBacklog]
+  let aprendendo: Aprendendo[] = fila.aprendizado.map((i) => ({ data: i.data, card: i.card! }))
+
+  const g = lerRevisaoGuardada(userId)
+  if (!g || g.filtro !== filtro) return { sessao: avancar({ principal, aprendendo, atual: null, feitos: 0 }, now), mostrando: false }
+
+  const naSessao = new Set(aprendendo.map((a) => a.data.id))
+  for (const id of g.aprendendo) {
+    const data = baralho.porId.get(id)
+    const card = progresso.get(id)?.card
+    if (data && card && !naSessao.has(id) && emAprendizado(card) && passaFiltro(data, filtro)) {
+      aprendendo = inserirPorDue(aprendendo, { data, card })
+    }
+  }
+
+  // o card que estava na tela volta primeiro
+  const i = principal.findIndex((x) => x.data.id === g.atual)
+  if (i >= 0) {
+    const sessao = { principal: principal.filter((_, k) => k !== i), aprendendo, atual: principal[i], feitos: g.feitos }
+    return { sessao, mostrando: g.mostrando }
+  }
+  const j = aprendendo.findIndex((x) => x.data.id === g.atual)
+  if (j >= 0) {
+    const sessao = { principal, aprendendo: aprendendo.filter((_, k) => k !== j), atual: aprendendo[j], feitos: g.feitos }
+    return { sessao, mostrando: g.mostrando }
+  }
+  return { sessao: avancar({ principal, aprendendo, atual: null, feitos: g.feitos }, now), mostrando: false }
+}
+
 export default function Revisao({ baralho, dataProva, userId, progresso, filtro, onSalvo, onFim, onSair }: Props) {
-  const [sessao, setSessao] = useState<Sessao>(() => {
+  const [inicio] = useState(() => {
     const now = new Date()
-    const fila = montarFila(baralho, progresso, filtro, now)
-    return avancar(
-      {
-        principal: [...fila.revisoes, ...fila.novosSimulado, ...fila.novosBacklog],
-        aprendendo: fila.aprendizado.map((i) => ({ data: i.data, card: i.card! })),
-        atual: null,
-        feitos: 0,
-      },
-      now,
-    )
+    const { sessao, mostrando } = sessaoInicial(baralho, progresso, filtro, userId, now)
+    const atual = sessao.atual
+    const preview = mostrando && atual ? { now, cards: previa(atual.card ?? createEmptyCard(now), now, dataProva) } : null
+    return { sessao, preview }
   })
-  const [mostrando, setMostrando] = useState(false)
-  const [preview, setPreview] = useState<{ now: Date; cards: Record<Grade, Card> } | null>(null)
+  const [sessao, setSessao] = useState<Sessao>(inicio.sessao)
+  const [mostrando, setMostrando] = useState(inicio.preview !== null)
+  const [preview, setPreview] = useState<{ now: Date; cards: Record<Grade, Card> } | null>(inicio.preview)
   const [salvando, setSalvando] = useState(false)
   const [pendente, setPendente] = useState<Salvamento | null>(null)
   const [erro, setErro] = useState<string | null>(null)
@@ -70,8 +102,28 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
   const acabou = !atual && aprendendo.length === 0
 
   useEffect(() => {
-    if (acabou) onFim()
-  }, [acabou, onFim])
+    if (!acabou) return
+    guardarRevisao(userId, null)
+    onFim()
+  }, [acabou, onFim, userId])
+
+  // Guarda onde a revisão está, para continuar daqui se a página for recarregada
+  useEffect(() => {
+    if (acabou) return
+    guardarRevisao(userId, {
+      dia: diaSP(new Date()),
+      filtro,
+      feitos,
+      atual: atual?.data.id ?? null,
+      mostrando,
+      aprendendo: aprendendo.map((a) => a.data.id),
+    })
+  }, [userId, filtro, feitos, atual, mostrando, aprendendo, acabou])
+
+  const sair = useCallback(() => {
+    guardarRevisao(userId, null)
+    onSair()
+  }, [userId, onSair])
 
   // Enquanto espera um card de aprendizado, atualiza o contador e puxa o card quando vencer
   useEffect(() => {
@@ -103,7 +155,11 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
         setSalvando(false)
         return
       }
-      onSalvo(p.item.data.id, p.card, p.stats)
+      onSalvo(p.item.data.id, p.card, p.stats, p.nota)
+      // histórico por dia: se falhar, a revisão em si já está salva
+      registrarRevisao(userId, p.item.data.id, p.nota).catch((e: Error) =>
+        console.warn('Falha ao registrar no histórico:', e.message),
+      )
       setPendente(null)
       setMostrando(false)
       setPreview(null)
@@ -121,7 +177,7 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
     (grade: Grade) => {
       if (!atual || !preview || salvando || pendente) return
       const stats = somarStats(progresso.get(atual.data.id)?.stats, grade)
-      void salvar({ item: atual, card: preview.cards[grade], stats })
+      void salvar({ item: atual, card: preview.cards[grade], stats, nota: grade })
     },
     [atual, preview, salvando, pendente, salvar, progresso],
   )
@@ -160,7 +216,7 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
       <h1 className="sr-only">Revisão</h1>
       <header className="mb-5 flex items-center gap-3">
         <button
-          onClick={onSair}
+          onClick={sair}
           aria-label="Encerrar revisão e voltar ao início"
           className="foco -ml-2 flex h-10 w-10 items-center justify-center rounded-full text-xl text-muted transition-colors hover:bg-surface-2 hover:text-ink"
         >
