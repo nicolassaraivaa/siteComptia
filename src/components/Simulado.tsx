@@ -226,7 +226,8 @@ export default function Simulado({
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  const pct = Math.round((respondidas / itens.length) * 100)
+  // A barra acompanha a posição, como o "11/13" ao lado; as em branco são avisadas ao finalizar
+  const pct = Math.round(((idx + 1) / itens.length) * 100)
   const multiplaIncompleta = q.tipo === 'multipla' && atuais.length > 0 && atuais.length < q.escolha
   const corTimer =
     restanteMs === null ? '' : restanteMs <= 60_000 ? 'var(--d2)' : restanteMs <= 10 * 60_000 ? 'var(--d4)' : 'var(--ink)'
@@ -247,10 +248,10 @@ export default function Simulado({
         <div
           className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2"
           role="progressbar"
-          aria-label="Questões respondidas"
-          aria-valuemin={0}
+          aria-label="Posição no simulado"
+          aria-valuemin={1}
           aria-valuemax={itens.length}
-          aria-valuenow={respondidas}
+          aria-valuenow={idx + 1}
         >
           <div className="h-full rounded-full bg-ink transition-[width] duration-300" style={{ width: `${pct}%` }} />
         </div>
