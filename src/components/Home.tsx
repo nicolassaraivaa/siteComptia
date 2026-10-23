@@ -1,8 +1,9 @@
-import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { DOMINIO_COR, DOMINIOS } from '../config'
 import type { Dominio } from '../lib/cards'
 import { diasEntre, formatarDataProva } from '../lib/datas'
-import { diaSP, montarFila, type Baralho, type Filtro } from '../lib/fila'
+import { diaSP, montarFila, passaFiltro, type Baralho, type Filtro } from '../lib/fila'
+import { emAprendizado, formatIntervalo } from '../lib/fsrs'
 import type { Ofensiva } from '../lib/ofensiva'
 import type { ProgressoMap } from '../lib/progresso'
 import MenuConta from './MenuConta'
@@ -57,17 +58,35 @@ export default function Home({
   onFiltro,
   onComecar,
 }: Props) {
+  // Atualiza a cada 30 s: cards em aprendizado vencem minutos depois de revisados
+  const [, setTique] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setTique((t) => t + 1), 30_000)
+    return () => clearInterval(id)
+  }, [])
+
   const now = new Date()
   const hoje = diaSP(now)
   const fila = montarFila(baralho, progresso, filtro, now)
   const diasProva = dataProva ? diasEntre(hoje, dataProva) : null
 
   const totalFila = fila.aprendizado.length + fila.revisoes.length + fila.novosSimulado.length + fila.novosBacklog.length
+  // Cards em aprendizado que ainda não venceram: voltam daqui a alguns minutos, hoje mesmo
+  let voltando = 0
+  let proximoVolta: Date | null = null
+  for (const c of baralho.cards) {
+    const p = progresso.get(c.id)
+    if (!p || !passaFiltro(c, filtro) || !emAprendizado(p.card) || p.card.due <= now || diaSP(p.card.due) !== hoje) continue
+    voltando++
+    if (!proximoVolta || p.card.due < proximoVolta) proximoVolta = p.card.due
+  }
+
   const detalhes = [
     fila.novosSimulado.length > 0 && plural(fila.novosSimulado.length, 'novo', 'novos'),
     fila.aprendizado.length > 0 && `${fila.aprendizado.length} em andamento`,
     fila.revisoes.length > 0 && `${fila.revisoes.length} para revisar`,
     fila.novosBacklog.length > 0 && `${fila.novosBacklog.length} do backlog`,
+    proximoVolta && `+${voltando} ${voltando === 1 ? 'volta' : 'voltam'} em ${formatIntervalo(proximoVolta, now)}`,
   ].filter(Boolean) as string[]
 
   const porDominio = LISTA_DOMINIOS.map((d) => {
