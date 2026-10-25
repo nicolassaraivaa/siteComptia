@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" class="cl-root" role="img">
+<style>
+.cl-all{animation:cl-float 3.4s ease-in-out infinite;transform-box:view-box;transform-origin:180px 300px}
+.cl-tail{animation:cl-wag 1.8s ease-in-out infinite;transform-box:view-box;transform-origin:248px 282px}
+.cl-glint{animation:cl-glint 4.5s ease-in-out infinite}
+.cl-blink{animation:cl-blink 4s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes cl-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes cl-wag{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(7deg)}}
+@keyframes cl-glint{0%,55%{transform:translateX(0)}80%,100%{transform:translateX(230px)}}
+@keyframes cl-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+
+@media (prefers-reduced-motion:reduce){.cl-root *{animation:none!important}}
+</style>
+<defs>
+  <linearGradient id="cl-hood" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#8A70FF"/><stop offset="1" stop-color="#6B4CF5"/>
+  </linearGradient>
+  <linearGradient id="cl-lens" x1="0" y1="0" x2="0.25" y2="1">
+    <stop offset="0" stop-color="#191547"/><stop offset=".55" stop-color="#3F35C2"/><stop offset="1" stop-color="#9A7CFF"/>
+  </linearGradient>
+  <pattern id="cl-hatch" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <path d="M0 0 V11 M0 0 H11" stroke="#432819" stroke-width="2.4"/>
+  </pattern>
+  <clipPath id="cl-lenses"><path d="M 108 100 L 174 100 C 178 100 179 103 178 106 L 173 122 C 170 130 164 134 156 134 L 128 134 C 118 134 112 129 110 121 L 106 105 C 105 102 106 100 108 100 Z"/><path d="M 252 100 L 186 100 C 182 100 181 103 182 106 L 187 122 C 190 130 196 134 204 134 L 232 134 C 242 134 248 129 250 121 L 254 105 C 255 102 254 100 252 100 Z"/></clipPath>
+  <clipPath id="cl-body"><path d="M 120 204 C 102 210 98 230 97 252 L 98 268 Q 99 278 110 278 L 250 278 Q 261 278 262 268 L 263 252 C 262 230 258 210 240 204 C 220 198 140 198 120 204 Z"/></clipPath>
+  <clipPath id="cl-cloud"><circle cx="60" cy="334" r="16"/><circle cx="92" cy="322" r="23"/><circle cx="134" cy="315" r="26"/><circle cx="180" cy="312" r="27"/><circle cx="226" cy="315" r="26"/><circle cx="268" cy="322" r="23"/><circle cx="300" cy="334" r="16"/><rect x="44" y="320" width="272" height="30" rx="14"/></clipPath>
+</defs>
+<title>Castor — logo</title>
+<defs>
+  <linearGradient id="cl-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4338CA"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient>
+  <clipPath id="cl-badge"><rect x="0" y="0" width="256" height="256" rx="60"/></clipPath>
+</defs>
+<g clip-path="url(#cl-badge)">
+  <rect width="256" height="256" fill="url(#cl-bg)"/>
+  <circle cx="214" cy="40" r="70" fill="#fff" opacity=".07"/>
+  <circle cx="30" cy="236" r="60" fill="#22D3EE" opacity=".12"/>
+  <g transform="translate(128 150) scale(.96) translate(-180 -126)">
+    <g class="cl-body">
+  <path d="M 120 204 C 102 210 98 230 97 252 L 98 268 Q 99 278 110 278 L 250 278 Q 261 278 262 268 L 263 252 C 262 230 258 210 240 204 C 220 198 140 198 120 204 Z" fill="url(#cl-hood)"/>
+  <g clip-path="url(#cl-body)">
+    <path d="M 232 200 C 254 212 258 236 256 270 L 254 292 L 280 292 L 280 200 Z" fill="#4E35C9" opacity=".5"/>
+    <rect x="90" y="264" width="180" height="20" fill="#4E35C9"/>
+    <path d="M 90 264 L 270 264" stroke="#22163A" stroke-width="3"/>
+  </g>
+  <path d="M 120 204 C 102 210 98 230 97 252 L 98 268 Q 99 278 110 278 L 250 278 Q 261 278 262 268 L 263 252 C 262 230 258 210 240 204 C 220 198 140 198 120 204 Z" fill="none" stroke="#22163A" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M 114 211 C 120 186 240 186 246 211 C 242 228 118 228 114 211 Z" fill="#4E35C9" stroke="#22163A" stroke-width="4"/>
+  <g stroke-linecap="round">
+    <path d="M 166 221 Q 162 230 163 238 M 194 221 Q 198 230 197 238" stroke="#22163A" stroke-width="8" fill="none"/>
+    <path d="M 166 221 Q 162 230 163 238 M 194 221 Q 198 230 197 238" stroke="#ECE9FF" stroke-width="4" fill="none"/>
+  </g>
+  <rect x="158.5" y="235" width="9" height="10" rx="2.5" fill="#3CD3F5" stroke="#22163A" stroke-width="3"/>
+  <rect x="192.5" y="235" width="9" height="10" rx="2.5" fill="#3CD3F5" stroke="#22163A" stroke-width="3"/>
+  <g transform="translate(222 226) scale(0.68)">
+  <path d="M0 -21 L18 -15 L18 -2 C18 10 10 17 0 21 C-10 17 -18 10 -18 -2 L-18 -15 Z" fill="#3CD3F5" stroke="#22163A" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M0 -21 L18 -15 L18 -2 C18 10 10 17 0 21 Z" fill="#159FCB" opacity=".35"/>
+  <path d="M-5.5 -1 V-6 A5.5 5.5 0 0 1 5.5 -6 V-1" fill="none" stroke="#22163A" stroke-width="3" stroke-linecap="round"/>
+  <rect x="-8" y="-2" width="16" height="12" rx="2.5" fill="#22163A"/>
+  <circle cx="0" cy="3.4" r="2" fill="#3CD3F5"/>
+</g>
+</g>
+    <g class="cl-head">
+  <path d="M 156 70 C 152 48 168 34 192 34 C 185 41 188 47 199 47 C 193 54 196 60 206 63 C 190 66 172 68 156 70 Z" fill="#9C6440" stroke="#22163A" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="114" cy="82" r="19" fill="#9C6440" stroke="#22163A" stroke-width="4"/>
+  <circle cx="246" cy="82" r="19" fill="#9C6440" stroke="#22163A" stroke-width="4"/>
+  <circle cx="115" cy="84" r="9" fill="#C7836A"/><circle cx="245" cy="84" r="9" fill="#C7836A"/>
+  <path d="M 180 56 C 230 56 264 86 266 126 C 267 140 266 150 263 158 L 275 164 L 261 171 L 269 181 L 252 183 C 236 195 210 201 180 201 C 150 201 124 195 108 183 L 91 181 L 99 171 L 85 164 L 97 158 C 94 150 93 140 94 126 C 96 86 130 56 180 56 Z" fill="#9C6440" stroke="#22163A" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M 180 139 C 170 127 137 127 131 151 C 127 173 149 189 180 183 C 211 189 233 173 229 151 C 223 127 190 127 180 139 Z" fill="#F3D5AF" stroke="#22163A" stroke-width="3" stroke-linejoin="round"/>
+  <g fill="#7B4A2E" opacity=".7"><circle cx="148" cy="160" r="2.2"/><circle cx="142" cy="152" r="2.2"/><circle cx="154" cy="151" r="2.2"/><circle cx="212" cy="160" r="2.2"/><circle cx="218" cy="152" r="2.2"/><circle cx="206" cy="151" r="2.2"/></g>
+  <path d="M 170 160 L 190 160 L 190 179 Q 190 183 186 183 L 174 183 Q 170 183 170 179 Z" fill="#FFFDF5" stroke="#22163A" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M 180 161 L 180 182" stroke="#22163A" stroke-width="2.5"/><path d="M 180 152 L 180 160 M 161 159 Q 171 168 180 160 Q 191 167 206 154 L 211 151" fill="none" stroke="#22163A" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 166 140 C 166 131 194 131 194 140 C 194 148 186 153 180 153 C 174 153 166 148 166 140 Z" fill="#22163A"/>
+  <ellipse cx="174" cy="138" rx="4.5" ry="2.6" fill="#fff" opacity=".7"/>
+  
+  <g class="cl-glasses" transform="">
+  <path d="M 106 104 L 94 111 M 254 104 L 266 111" stroke="#15102A" stroke-width="5" stroke-linecap="round"/>
+  <path d="M 108 100 L 174 100 C 178 100 179 103 178 106 L 173 122 C 170 130 164 134 156 134 L 128 134 C 118 134 112 129 110 121 L 106 105 C 105 102 106 100 108 100 Z" fill="url(#cl-lens)"/>
+  <path d="M 252 100 L 186 100 C 182 100 181 103 182 106 L 187 122 C 190 130 196 134 204 134 L 232 134 C 242 134 248 129 250 121 L 254 105 C 255 102 254 100 252 100 Z" fill="url(#cl-lens)"/>
+  <g clip-path="url(#cl-lenses)">
+    <path d="M 120 134 L 140 100 L 152 100 L 132 134 Z M 136 134 L 156 100 L 161 100 L 141 134 Z M 196 134 L 216 100 L 228 100 L 208 134 Z M 212 134 L 232 100 L 237 100 L 217 134 Z" fill="#fff" opacity=".28"/>
+    <g class="cl-glint"><path d="M 60 140 L 84 96 L 104 96 L 80 140 Z" fill="#fff" opacity=".75"/></g>
+  </g>
+  <path d="M 108 100 L 174 100 C 178 100 179 103 178 106 L 173 122 C 170 130 164 134 156 134 L 128 134 C 118 134 112 129 110 121 L 106 105 C 105 102 106 100 108 100 Z" fill="none" stroke="#15102A" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M 252 100 L 186 100 C 182 100 181 103 182 106 L 187 122 C 190 130 196 134 204 134 L 232 134 C 242 134 248 129 250 121 L 254 105 C 255 102 254 100 252 100 Z" fill="none" stroke="#15102A" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M 108 100 L 174 100 M 186 100 L 252 100" stroke="#15102A" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 175 104 Q 180 99 185 104" stroke="#15102A" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <circle cx="118" cy="104" r="2.2" fill="#C9D4FF"/><circle cx="242" cy="104" r="2.2" fill="#C9D4FF"/>
+</g><path d="M 122 90 Q 140 84 160 88 M 200 83 Q 220 72 240 80" fill="none" stroke="#3A2216" stroke-width="7" stroke-linecap="round"/>
+  
+  
+  
+</g>
+  </g>
+</g>
+</svg>

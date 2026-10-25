@@ -120,7 +120,7 @@ export default function Home({
     <div className="mx-auto max-w-5xl px-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(3rem,env(safe-area-inset-bottom))] sm:px-6">
       <header className="flex items-center justify-between gap-3 py-4">
         <p className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
-          <Castor tamanho={40} />
+          <Castor pose="icone" tamanho={40} />
           Sec+ SY0-701
         </p>
         <div className="flex items-center gap-2">

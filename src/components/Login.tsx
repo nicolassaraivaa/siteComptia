@@ -80,7 +80,7 @@ export default function Login() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4 py-10">
-      <Castor tamanho={96} animacao="feliz" className="-ml-2 mb-3" rotulo="Nickols, o castor mascote" />
+      <Castor pose="neutro" tamanho={120} className="-ml-3 mb-2" rotulo="Nickols, o castor mascote" />
       <h1 className="text-3xl font-extrabold tracking-tight">Sec+ SY0-701</h1>
       <p className="mt-1 mb-8 text-muted">
         {criando

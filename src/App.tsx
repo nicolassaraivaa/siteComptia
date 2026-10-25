@@ -431,7 +431,11 @@ export default function App() {
         progresso={progresso}
         filtro={filtro}
         onSalvo={onSalvo}
-        onFim={() => setTela('fim')}
+        onFim={() => {
+          // a tela de fim já mostra a ofensiva; não sobrepõe as duas comemorações
+          setComemoracao(null)
+          setTela('fim')
+        }}
         onSair={() => setTela('home')}
       />
       {telaComemoracao}

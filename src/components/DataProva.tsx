@@ -35,7 +35,7 @@ export default function DataProva({ userId, atual, primeiroAcesso, onSalvo, onCa
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4 py-10">
-      {primeiroAcesso && <Castor tamanho={96} animacao="feliz" className="-ml-2 mb-3" />}
+      {primeiroAcesso && <Castor pose="neutro" tamanho={120} className="-ml-3 mb-2" />}
       <h1 className="text-3xl font-extrabold tracking-tight">
         {primeiroAcesso ? 'Bem-vindo ao Sec+ SY0-701' : 'Data da prova'}
       </h1>

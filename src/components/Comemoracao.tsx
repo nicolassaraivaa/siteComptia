@@ -66,7 +66,8 @@ export default function Comemoracao({ dias, recorde, onFechar }: Props) {
               🔥
             </span>
           ))}
-          <Castor tamanho={180} animacao="comemorando" rotulo="Nickols, o castor, comemorando" className="relative z-10" />
+          <div aria-hidden="true" className="fogo-atras absolute -inset-[18%] -top-[34%]" />
+          <Castor pose="streak" tamanho={210} rotulo="Nickols, o castor, comemorando" className="relative z-10" />
         </div>
         <p id="comemoracao-titulo" className="mt-4 text-4xl font-extrabold tracking-tight tabular-nums">
           {titulo}
