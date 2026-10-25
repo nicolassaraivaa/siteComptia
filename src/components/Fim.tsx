@@ -25,6 +25,11 @@ export default function Fim({ baralho, progresso, filtro, ofensiva, onVoltar }: 
   // os textos aparecem depois que o Nickols pousa
   const [pousou, setPousou] = useState(!terminou)
   const onPouso = useCallback(() => setPousou(true), [])
+  // depois do pouso, os textos entram um de cada vez
+  const entrada = (ordem: number) => ({
+    className: pousou ? 'animate-surgir' : '',
+    style: { animationDelay: `${150 + ordem * 90}ms` },
+  })
 
   return (
     // o corte fica na tela inteira (não na coluna), para o voo usar a tela toda sem criar rolagem
@@ -36,10 +41,12 @@ export default function Fim({ baralho, progresso, filtro, ofensiva, onVoltar }: 
           <Castor pose="neutro" tamanho={170} rotulo="Nickols, o castor" className="motion-safe:animate-castor-entrar" />
         )}
 
-        <div className={`w-full ${pousou ? 'animate-surgir' : 'invisible'}`}>
-          <h1 className="mt-6 text-3xl font-extrabold tracking-tight">{terminou ? 'Cards em dia!' : 'Sessão concluída'}</h1>
+        <div className={`w-full ${pousou ? '' : 'invisible'}`}>
+          <h1 className={`mt-6 text-3xl font-extrabold tracking-tight ${entrada(0).className}`} style={entrada(0).style}>
+            {terminou ? 'Cards em dia!' : 'Sessão concluída'}
+          </h1>
           {ofensiva.hojeFeito && (
-            <p className="mt-2 text-lg font-bold">
+            <p className={`mt-2 text-lg font-bold ${entrada(1).className}`} style={entrada(1).style}>
               <span aria-hidden="true">🔥 </span>
               <span className="tabular-nums">
                 {ofensiva.atual} {ofensiva.atual === 1 ? 'dia' : 'dias'}
@@ -48,7 +55,7 @@ export default function Fim({ baralho, progresso, filtro, ofensiva, onVoltar }: 
             </p>
           )}
 
-          <p className="mt-2 text-muted">
+          <p className={`mt-2 text-muted ${entrada(2).className}`} style={entrada(2).style}>
             {proximo
               ? proximo <= now
                 ? 'Já há cards vencidos. Volte ao início e comece outra sessão.'
@@ -58,7 +65,8 @@ export default function Fim({ baralho, progresso, filtro, ofensiva, onVoltar }: 
 
           <button
             onClick={onVoltar}
-            className="foco mt-8 w-full rounded-2xl bg-primary py-4 text-lg font-bold text-on-primary transition-opacity hover:opacity-90"
+            style={entrada(3).style}
+            className={`foco mt-8 w-full rounded-2xl bg-primary py-4 text-lg font-bold text-on-primary transition-opacity hover:opacity-90 ${entrada(3).className}`}
           >
             Voltar ao início
           </button>
