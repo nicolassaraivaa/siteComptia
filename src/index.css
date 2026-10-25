@@ -92,3 +92,91 @@
     outline-offset: 2px;
   }
 }
+
+/* ---------- Castor (mascote) ---------- */
+.castor * {
+  transform-box: view-box;
+}
+.castor-olhos {
+  transform-origin: 80px 56px;
+  animation: castor-piscar 4.5s infinite;
+}
+.castor-braco-esq {
+  transform-origin: 53px 98px;
+}
+.castor-braco-dir {
+  transform-origin: 107px 98px;
+}
+.castor-rabo {
+  transform-origin: 100px 136px;
+}
+.castor-corpo-todo {
+  transform-origin: 80px 152px;
+}
+
+.castor-feliz .castor-corpo-todo {
+  animation: castor-balancar 2.6s ease-in-out infinite;
+}
+.castor-feliz .castor-rabo {
+  animation: castor-rabo 2.6s ease-in-out infinite;
+}
+
+.castor-comemorando .castor-corpo-todo {
+  animation: castor-pular 0.75s cubic-bezier(0.3, 0, 0.4, 1) infinite;
+}
+.castor-comemorando .castor-braco-esq {
+  animation: castor-acenar-esq 0.75s ease-in-out infinite;
+}
+.castor-comemorando .castor-braco-dir {
+  animation: castor-acenar-dir 0.75s ease-in-out infinite;
+}
+.castor-comemorando .castor-rabo {
+  animation: castor-rabo 0.75s ease-in-out infinite;
+}
+
+@keyframes castor-piscar {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+@keyframes castor-balancar {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+@keyframes castor-rabo {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
+}
+@keyframes castor-pular {
+  0%, 100% { transform: translateY(0) scale(1.03, 0.97); }
+  45% { transform: translateY(-16px) scale(0.98, 1.02); }
+}
+@keyframes castor-acenar-esq {
+  0%, 100% { transform: rotate(135deg); }
+  50% { transform: rotate(165deg); }
+}
+@keyframes castor-acenar-dir {
+  0%, 100% { transform: rotate(-135deg); }
+  50% { transform: rotate(-165deg); }
+}
+
+/* entrada da comemoração */
+@keyframes castor-entrar {
+  0% { opacity: 0; transform: scale(0.4) translateY(40px); }
+  60% { opacity: 1; transform: scale(1.08) translateY(-6px); }
+  100% { opacity: 1; transform: none; }
+}
+@utility animate-castor-entrar {
+  animation: castor-entrar 520ms cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+}
+@keyframes fagulha {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--fx), var(--fy)) scale(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .castor *,
+  .castor-fagulha {
+    animation: none !important;
+  }
+}

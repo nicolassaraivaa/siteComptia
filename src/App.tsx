@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Card, Grade } from 'ts-fsrs'
+import Comemoracao from './components/Comemoracao'
 import DataProva from './components/DataProva'
 import Fim from './components/Fim'
 import Historico from './components/Historico'
@@ -81,6 +82,13 @@ export default function App() {
   const [filtro, setFiltro] = useState<Filtro>('todos')
   const [dias, setDias] = useState<Set<string>>(new Set())
   const diasSalvos = useRef<Set<string>>(new Set()) // dias já gravados na tabela atividade
+  const diasRef = useRef(dias) // para saber, ao salvar, se é a primeira revisão do dia
+  useEffect(() => {
+    diasRef.current = dias
+  }, [dias])
+  // O castor comemora na primeira revisão de cada dia (a ofensiva do dia está garantida)
+  const [comemoracao, setComemoracao] = useState<{ dias: number; recorde: boolean } | null>(null)
+  const fecharComemoracao = useCallback(() => setComemoracao(null), [])
   const [questoes, setQuestoes] = useState<Questao[] | null>(null)
   const [respostas, setRespostas] = useState<Resposta[]>([])
   const [erroQuestoes, setErroQuestoes] = useState<string | null>(null)
@@ -122,6 +130,7 @@ export default function App() {
     setSimulado(null)
     setProvas(null)
     setCardsPorDia(null)
+    setComemoracao(null)
     retomouProva.current = false
     setRevisaoDecidida(false)
     setDias(new Set())
@@ -203,6 +212,13 @@ export default function App() {
         return next
       })
       const hoje = diaSP(now)
+      if (!diasRef.current.has(hoje)) {
+        const antes = calcularOfensiva(diasRef.current, hoje)
+        const novos = new Set(diasRef.current).add(hoje)
+        const depois = calcularOfensiva(novos, hoje)
+        diasRef.current = novos
+        setComemoracao({ dias: depois.atual, recorde: depois.atual > antes.recorde })
+      }
       setDias((prev) => (prev.has(hoje) ? prev : new Set(prev).add(hoje)))
       if (userId && !diasSalvos.current.has(hoje)) {
         diasSalvos.current.add(hoje)
@@ -401,8 +417,13 @@ export default function App() {
     )
   }
 
+  const telaComemoracao = comemoracao && (
+    <Comemoracao dias={comemoracao.dias} recorde={comemoracao.recorde} onFechar={fecharComemoracao} />
+  )
+
   if (tela === 'revisao') {
     return (
+      <>
       <Revisao
         baralho={baralho}
         dataProva={dataProva}
@@ -413,6 +434,8 @@ export default function App() {
         onFim={() => setTela('fim')}
         onSair={() => setTela('home')}
       />
+      {telaComemoracao}
+      </>
     )
   }
   if (tela === 'historico-simulado' && simuladoAberto) {
@@ -471,7 +494,12 @@ export default function App() {
     )
   }
   if (tela === 'fim') {
-    return <Fim baralho={baralho} progresso={progresso} filtro={filtro} ofensiva={ofensiva} onVoltar={() => setTela('home')} />
+    return (
+      <>
+        <Fim baralho={baralho} progresso={progresso} filtro={filtro} ofensiva={ofensiva} onVoltar={() => setTela('home')} />
+        {telaComemoracao}
+      </>
+    )
   }
 
   return (

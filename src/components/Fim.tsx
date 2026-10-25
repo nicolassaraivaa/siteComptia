@@ -1,4 +1,5 @@
 import { FUSO } from '../config'
+import Castor from './Castor'
 import { proximoVencimento, type Baralho, type Filtro } from '../lib/fila'
 import { formatIntervalo } from '../lib/fsrs'
 import type { Ofensiva } from '../lib/ofensiva'
@@ -17,22 +18,28 @@ export default function Fim({ baralho, progresso, filtro, ofensiva, onVoltar }: 
   const now = new Date()
   const proximo = proximoVencimento(baralho, progresso, filtro)
   const recorde = ofensiva.atual > 1 && ofensiva.atual === ofensiva.recorde
+  const terminou = !proximo || proximo > now
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-4 py-10 text-center">
+      <Castor
+        tamanho={170}
+        animacao={terminou ? 'comemorando' : 'feliz'}
+        className="motion-safe:animate-castor-entrar"
+        rotulo={terminou ? 'Nickols, o castor, comemorando' : 'Nickols, o castor'}
+      />
+
+      <h1 className="mt-4 text-3xl font-extrabold tracking-tight">{terminou ? 'Cards em dia!' : 'Sessão concluída'}</h1>
       {ofensiva.hojeFeito && (
-        <div className="mb-10">
-          <div className="text-7xl leading-none motion-safe:animate-revelar" aria-hidden="true">
-            🔥
-          </div>
-          <p className="mt-3 text-4xl font-extrabold tabular-nums">
+        <p className="mt-2 text-lg font-bold">
+          <span aria-hidden="true">🔥 </span>
+          <span className="tabular-nums">
             {ofensiva.atual} {ofensiva.atual === 1 ? 'dia' : 'dias'}
-          </p>
-          <p className="mt-1 font-medium text-flame">{recorde ? 'Novo recorde de ofensiva' : 'de ofensiva'}</p>
-        </div>
+          </span>{' '}
+          <span className="text-flame">{recorde ? 'de ofensiva, novo recorde!' : 'de ofensiva'}</span>
+        </p>
       )}
 
-      <h1 className="text-2xl font-bold">Nada para revisar agora</h1>
       <p className="mt-2 text-muted">
         {proximo
           ? proximo <= now
