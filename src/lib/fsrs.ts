@@ -24,23 +24,54 @@ export const f = fsrs(
   }),
 )
 
+const DIA = 86_400_000
+
 export const GRADES = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as const
 
 /**
+ * Encolhe um intervalo para ficar abaixo do limite, com diferença visível na tela
+ * (ex.: "8 d" e "14 d", nunca "14 d" e "14 d"). Se já está abaixo, fica como está.
+ */
+function abaixoDe(ms: number, limite: number): number {
+  const rotulo = (x: number) => formatIntervalo(new Date(x), new Date(0))
+  if (ms < limite && rotulo(ms) !== rotulo(limite)) return ms
+  for (const fator of [0.6, 0.5, 0.4, 0.3, 0.2]) {
+    const x = limite * fator
+    if (rotulo(x) !== rotulo(limite)) return x
+  }
+  return limite * 0.1
+}
+
+/**
  * f.repeat com teto rígido de maximoDias(), e nada agendado para depois da
- * véspera da prova. O teto é aplicado aqui porque o ts-fsrs força Hard < Good < Easy
- * depois de aplicar maximum_interval, e Good/Easy podem passar do limite.
+ * véspera da prova. Depois do teto, garante Difícil < Bom < Fácil: sem isso,
+ * os três batiam no limite e ficavam iguais (ex.: 14 d, 14 d, 14 d).
+ * Quando o teto corta, Fácil fica no teto, Bom em ~60% dele e Difícil em ~60% do Bom.
  */
 export function previa(card: Card, now: Date, dataProva: string | null): Record<Grade, Card> {
   const log = f.repeat(card, now)
   const dias = maximoDias(now, dataProva)
-  let teto = new Date(now.getTime() + dias * 86_400_000)
+  let teto = new Date(now.getTime() + dias * DIA)
   const vespera = dataProva ? fimDaVespera(dataProva) : null
   if (vespera && vespera > now && vespera < teto) teto = vespera
+
+  const t = now.getTime()
+  const ms = (g: Grade) => Math.min(log[g].card.due.getTime(), teto.getTime()) - t
+  const facil = ms(Rating.Easy)
+  const bom = abaixoDe(ms(Rating.Good), facil)
+  const dificil = abaixoDe(ms(Rating.Hard), bom)
+  const intervalo: Record<Grade, number> = {
+    [Rating.Again]: ms(Rating.Again),
+    [Rating.Hard]: dificil,
+    [Rating.Good]: bom,
+    [Rating.Easy]: facil,
+  }
+
   const out = {} as Record<Grade, Card>
   for (const g of GRADES) {
     const c = log[g].card
-    out[g] = c.due > teto ? { ...c, due: teto, scheduled_days: Math.min(c.scheduled_days, dias) } : c
+    const due = t + intervalo[g]
+    out[g] = due === c.due.getTime() ? c : { ...c, due: new Date(due), scheduled_days: Math.round(intervalo[g] / DIA) }
   }
   return out
 }
