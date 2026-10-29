@@ -17,7 +17,7 @@ import { CARDS } from './lib/cards'
 import { diaSP, montarBaralho, type Filtro } from './lib/fila'
 import type { Stats } from './lib/fsrs'
 import { carregarCardsPorDia, type CardsPorDia } from './lib/historico'
-import { calcularOfensiva, carregarDias, diasDoProgresso, registrarDia } from './lib/ofensiva'
+import { calcularOfensiva, carregarDias, diasDasRespostas, diasDoProgresso, registrarDia } from './lib/ofensiva'
 import { carregarPerfil, type Perfil } from './lib/perfil'
 import { carregarProgresso, type ProgressoMap } from './lib/progresso'
 import { lerRevisaoGuardada } from './lib/sessaoRevisao'
@@ -161,7 +161,8 @@ export default function App() {
       .then(([prog, salvos]) => {
         if (!atual()) return
         diasSalvos.current = salvos
-        setDias(new Set([...salvos, ...diasDoProgresso(prog)]))
+        // soma aos dias do simulado, que podem ter chegado antes
+        setDias((prev) => new Set([...prev, ...salvos, ...diasDoProgresso(prog)]))
         setProgresso(prog)
       })
       .catch((e: Error) => atual() && setErroCarga(e.message))
@@ -184,6 +185,8 @@ export default function App() {
         if (qs.length === 0) throw new Error('Nenhuma questão no banco. Rode os arquivos SQL do simulado.')
         setQuestoes(qs)
         setRespostas(rs)
+        // dias com questões respondidas também contam para a ofensiva
+        setDias((prev) => new Set([...prev, ...diasDasRespostas(rs)]))
       })
       .catch((e: Error) => {
         if (!atual()) return
@@ -196,6 +199,21 @@ export default function App() {
     limparConta()
     if (userId) carregar()
   }, [userId, carregar, limparConta])
+
+  /** Conta o dia na ofensiva (card revisado ou questão do simulado) e grava na tabela atividade */
+  const marcarDia = useCallback(
+    (dia: string) => {
+      setDias((prev) => (prev.has(dia) ? prev : new Set(prev).add(dia)))
+      if (userId && !diasSalvos.current.has(dia)) {
+        diasSalvos.current.add(dia)
+        registrarDia(userId, dia).catch((e: Error) => {
+          diasSalvos.current.delete(dia) // tenta de novo na próxima atividade
+          console.warn('Falha ao registrar ofensiva:', e.message)
+        })
+      }
+    },
+    [userId],
+  )
 
   const onSalvo = useCallback(
     (cardId: string, card: Card, stats: Stats, nota: Grade) => {
@@ -219,16 +237,9 @@ export default function App() {
         diasRef.current = novos
         setComemoracao({ dias: depois.atual, recorde: depois.atual > antes.recorde })
       }
-      setDias((prev) => (prev.has(hoje) ? prev : new Set(prev).add(hoje)))
-      if (userId && !diasSalvos.current.has(hoje)) {
-        diasSalvos.current.add(hoje)
-        registrarDia(userId, hoje).catch((e: Error) => {
-          diasSalvos.current.delete(hoje) // tenta de novo na próxima revisão
-          console.warn('Falha ao registrar ofensiva:', e.message)
-        })
-      }
+      marcarDia(hoje)
     },
-    [userId],
+    [marcarDia],
   )
 
   const ofensiva = useMemo(() => calcularOfensiva(dias, diaSP(new Date())), [dias])
@@ -245,11 +256,15 @@ export default function App() {
   )
   const ciclo = useMemo(() => (questoes ? estadoCiclo(questoes, respostas) : null), [questoes, respostas])
 
-  const mesclarRespostas = useCallback((novas: Resposta[]) => {
-    const chave = (r: Resposta) => `${r.questao}:${r.ciclo}`
-    const trocadas = new Set(novas.map(chave))
-    setRespostas((rs) => [...rs.filter((x) => !trocadas.has(chave(x))), ...novas])
-  }, [])
+  const mesclarRespostas = useCallback(
+    (novas: Resposta[]) => {
+      const chave = (r: Resposta) => `${r.questao}:${r.ciclo}`
+      const trocadas = new Set(novas.map(chave))
+      setRespostas((rs) => [...rs.filter((x) => !trocadas.has(chave(x))), ...novas])
+      for (const dia of new Set(diasDasRespostas(novas))) marcarDia(dia)
+    },
+    [marcarDia],
+  )
   const onRespondida = useCallback((r: Resposta) => mesclarRespostas([r]), [mesclarRespostas])
 
   function comecarSimulado(quantidade: number) {

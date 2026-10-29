@@ -29,7 +29,7 @@ create policy "progresso_update_own" on public.progresso
 create policy "progresso_delete_own" on public.progresso
   for delete to authenticated using ((select auth.uid()) = user_id);
 
--- Ofensiva (streak): um registro por dia (fuso America/Sao_Paulo) com pelo menos uma revisão
+-- Ofensiva (streak): um registro por dia (fuso America/Sao_Paulo) com pelo menos um card revisado ou uma questão do simulado respondida
 create table public.atividade (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   dia     date not null,

@@ -1,8 +1,9 @@
 import { diaSP } from './fila'
 import type { ProgressoMap } from './progresso'
+import type { Resposta } from './questoes'
 import { supabase } from './supabase'
 
-/** Dias (YYYY-MM-DD, fuso SP) com pelo menos uma revisão */
+/** Dias (YYYY-MM-DD, fuso SP) com pelo menos um card revisado ou uma questão do simulado respondida */
 export async function carregarDias(): Promise<Set<string>> {
   const { data, error } = await supabase.from('atividade').select('dia')
   if (error) throw error
@@ -23,6 +24,11 @@ export function diasDoProgresso(progresso: ProgressoMap): string[] {
   return dias
 }
 
+/** Dias com questões respondidas no simulado: fazer simulado também mantém a ofensiva */
+export function diasDasRespostas(respostas: Resposta[]): string[] {
+  return respostas.map((r) => diaSP(new Date(r.respondida_em)))
+}
+
 export function diaAnterior(dia: string): string {
   const d = new Date(`${dia}T12:00:00Z`)
   d.setUTCDate(d.getUTCDate() - 1)
@@ -38,7 +44,7 @@ export type Ofensiva = {
 
 export function calcularOfensiva(dias: Set<string>, hoje: string): Ofensiva {
   const hojeFeito = dias.has(hoje)
-  // Se ainda não revisou hoje, a ofensiva de ontem continua viva até o fim do dia
+  // Se ainda não estudou hoje, a ofensiva de ontem continua viva até o fim do dia
   let atual = 0
   for (let d = hojeFeito ? hoje : diaAnterior(hoje); dias.has(d); d = diaAnterior(d)) atual++
 

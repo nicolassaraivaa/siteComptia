@@ -9,8 +9,8 @@ export default function OfensivaCard({ ofensiva }: { ofensiva: Ofensiva }) {
   const msg = hojeFeito
     ? 'Hoje já está garantido.'
     : atual > 0
-      ? 'Revise 1 card hoje para manter.'
-      : 'Revise 1 card para começar.'
+      ? 'Revise 1 card ou responda 1 questão hoje para manter.'
+      : 'Revise 1 card ou responda 1 questão para começar.'
 
   return (
     <div className="flex items-center gap-4" aria-label="Ofensiva">
@@ -41,7 +41,7 @@ export default function OfensivaCard({ ofensiva }: { ofensiva: Ofensiva }) {
                 }`}
               >
                 <span className="sr-only">
-                  {fmtDia.format(data)}: {feito ? 'revisou' : 'não revisou'}
+                  {fmtDia.format(data)}: {feito ? 'estudou' : 'não estudou'}
                 </span>
               </span>
             </li>
