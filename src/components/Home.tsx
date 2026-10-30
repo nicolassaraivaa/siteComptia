@@ -82,10 +82,11 @@ export default function Home({
     if (!proximoVolta || p.card.due < proximoVolta) proximoVolta = p.card.due
   }
 
+  // Na mesma ordem em que a revisão mostra os cards: o que já foi visto antes dos novos
   const detalhes = [
-    fila.novosSimulado.length > 0 && plural(fila.novosSimulado.length, 'novo', 'novos'),
     fila.aprendizado.length > 0 && `${fila.aprendizado.length} em andamento`,
     fila.revisoes.length > 0 && `${fila.revisoes.length} para revisar`,
+    fila.novosSimulado.length > 0 && plural(fila.novosSimulado.length, 'novo', 'novos'),
     fila.novosBacklog.length > 0 && `${fila.novosBacklog.length} do backlog`,
     proximoVolta && `+${voltando} ${voltando === 1 ? 'volta' : 'voltam'} em ${formatIntervalo(proximoVolta, now)}`,
   ].filter(Boolean) as string[]

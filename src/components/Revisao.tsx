@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { createEmptyCard, type Card, type Grade } from 'ts-fsrs'
 import { DOMINIO_COR, DOMINIOS } from '../config'
 import { diaSP, montarFila, passaFiltro, type Baralho, type Filtro, type ItemFila } from '../lib/fila'
@@ -33,6 +33,21 @@ type Sessao = {
 function inserirPorDue(lista: Aprendendo[], item: Aprendendo): Aprendendo[] {
   const i = lista.findIndex((x) => x.card.due > item.card.due)
   return i === -1 ? [...lista, item] : [...lista.slice(0, i), item, ...lista.slice(i)]
+}
+
+/**
+ * Revisões que não estavam na sessão (venceram depois que ela começou, ou chegaram depois, como as
+ * das questões do simulado) entram antes do primeiro card novo: revisão sempre vem antes de novo.
+ * `avaliados` fica de fora porque o progresso recebido pode ainda não ter a avaliação que acabou de ser feita.
+ */
+function incluirRevisoesVencidas(s: Sessao, revisoes: ItemFila[], avaliados: Set<string>): Sessao {
+  const naSessao = new Set([...s.principal, ...s.aprendendo].map((x) => x.data.id))
+  if (s.atual) naSessao.add(s.atual.data.id)
+  const novas = revisoes.filter((r) => !naSessao.has(r.data.id) && !avaliados.has(r.data.id))
+  if (novas.length === 0) return s
+  const i = s.principal.findIndex((x) => !x.card)
+  const corte = i === -1 ? s.principal.length : i
+  return { ...s, principal: [...s.principal.slice(0, corte), ...novas, ...s.principal.slice(corte)] }
 }
 
 /** Escolhe o próximo card. Aprendizado vencido tem prioridade; `forcar` ignora a espera. */
@@ -97,6 +112,21 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
   const [erro, setErro] = useState<string | null>(null)
   const [agora, setAgora] = useState(() => new Date())
 
+  // Baralho e progresso mais recentes, para puxar revisões que vencem ou chegam durante a sessão
+  const recentes = useRef({ baralho, progresso })
+  useEffect(() => {
+    recentes.current = { baralho, progresso }
+  }, [baralho, progresso])
+  const avaliados = useRef(new Set<string>())
+
+  const proximo = useCallback(
+    (s: Sessao, now: Date, forcar = false) => {
+      const { revisoes } = montarFila(recentes.current.baralho, recentes.current.progresso, filtro, now)
+      return avancar(incluirRevisoesVencidas(s, revisoes, avaliados.current), now, forcar)
+    },
+    [filtro],
+  )
+
   const { atual, aprendendo, principal, feitos } = sessao
   const esperando = !atual && aprendendo.length > 0
   const acabou = !atual && aprendendo.length === 0
@@ -131,10 +161,10 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
     const id = setInterval(() => {
       const now = new Date()
       setAgora(now)
-      setSessao((s) => (s.atual ? s : avancar(s, now)))
+      setSessao((s) => (s.atual ? s : proximo(s, now)))
     }, 5_000)
     return () => clearInterval(id)
-  }, [esperando])
+  }, [esperando, proximo])
 
   const mostrarResposta = useCallback(() => {
     if (!atual || mostrando) return
@@ -155,6 +185,7 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
         setSalvando(false)
         return
       }
+      avaliados.current.add(p.item.data.id)
       onSalvo(p.item.data.id, p.card, p.stats, p.nota)
       // histórico por dia: se falhar, a revisão em si já está salva
       registrarRevisao(userId, p.item.data.id, p.nota).catch((e: Error) =>
@@ -166,11 +197,11 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
       setSalvando(false)
       setSessao((s) => {
         const aprendendo = emAprendizado(p.card) ? inserirPorDue(s.aprendendo, { data: p.item.data, card: p.card }) : s.aprendendo
-        return avancar({ ...s, aprendendo, atual: null, feitos: s.feitos + 1 }, new Date())
+        return proximo({ ...s, aprendendo, atual: null, feitos: s.feitos + 1 }, new Date())
       })
       setAgora(new Date())
     },
-    [userId, onSalvo],
+    [userId, onSalvo, proximo],
   )
 
   const avaliar = useCallback(
@@ -242,7 +273,7 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
           <p className="text-sm text-muted">Só restam cards em aprendizado</p>
           <p className="mt-1 mb-6 text-2xl font-bold">Próximo card em {formatIntervalo(aprendendo[0].card.due, agora)}</p>
           <button
-            onClick={() => setSessao((s) => avancar(s, new Date(), true))}
+            onClick={() => setSessao((s) => proximo(s, new Date(), true))}
             className="foco rounded-2xl bg-primary px-6 py-3 font-bold text-on-primary transition-opacity hover:opacity-90"
           >
             Revisar agora
