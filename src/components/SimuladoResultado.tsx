@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { DOMINIO_COR, DOMINIOS } from '../config'
 import type { Dominio } from '../lib/cards'
+import { formatarSegundos } from '../lib/datas'
 import { errou, salvarResposta, type Questao, type Resposta, type Resultado } from '../lib/questoes'
+import { IconeCronometro } from './Cronometro'
 import QuestaoVisao from './QuestaoVisao'
 
 type Props = {
@@ -16,6 +18,8 @@ type Props = {
   doHistorico?: { titulo: string }
   /** Presente no simulado de prova */
   prova?: { tempoUsadoS: number; duracaoS: number; emBranco: number; porTempo: boolean }
+  /** Tempo gasto no simulado normal, do início até finalizar (ausente nos antigos) */
+  tempoS?: number
 }
 
 /** Acerto a partir do qual consideramos "zona segura" (não é a nota oficial de 100 a 900) */
@@ -50,6 +54,7 @@ export default function SimuladoResultado({
   doHistorico,
   brancos = [],
   prova,
+  tempoS,
 }: Props) {
   const [respostas, setRespostas] = useState(iniciais)
   const [erro, setErro] = useState<string | null>(null)
@@ -105,6 +110,16 @@ export default function SimuladoResultado({
         <p className="mt-2 text-muted tabular-nums">
           {certas} de {corrigidas.length} {corrigidas.length === 1 ? 'questão' : 'questões'}
         </p>
+        {tempoS !== undefined && (
+          <p className="mt-3 flex items-center gap-2 text-sm text-muted tabular-nums">
+            <IconeCronometro />
+            <span>
+              <span className="sr-only">Tempo gasto: </span>
+              <span className="font-bold text-ink">{formatarSegundos(tempoS)}</span>
+              {respostas.length > 1 && ` · ${formatarSegundos(tempoS / respostas.length)} por questão, em média`}
+            </span>
+          </p>
+        )}
         {prova && (
           <div className="mt-4 flex flex-col gap-2">
             <p

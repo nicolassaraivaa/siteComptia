@@ -262,3 +262,18 @@ export async function salvarProva(userId: string, p: Prova): Promise<void> {
   const { error } = await supabase.from('provas').upsert({ user_id: userId, ...p }, { onConflict: 'id' })
   if (error) throw error
 }
+
+/** Tempo de um simulado normal, do início até finalizar (o de prova fica em Prova) */
+export type TempoSimulado = { id: string; iniciado_em: string; finalizado_em: string; tempo_s: number }
+
+/** Segundos gastos em cada simulado normal, pelo id */
+export async function carregarTempos(): Promise<Map<string, number>> {
+  const { data, error } = await supabase.from('simulado_tempos').select('id, tempo_s')
+  if (error) throw error
+  return new Map((data as { id: string; tempo_s: number }[]).map((t) => [t.id, t.tempo_s]))
+}
+
+export async function salvarTempo(userId: string, t: TempoSimulado): Promise<void> {
+  const { error } = await supabase.from('simulado_tempos').upsert({ user_id: userId, ...t }, { onConflict: 'id' })
+  if (error) throw error
+}

@@ -24,11 +24,13 @@ import { lerRevisaoGuardada } from './lib/sessaoRevisao'
 import {
   cardsDeQuestoes,
   carregarProvas,
+  carregarTempos,
   carregarQuestoes,
   carregarRespostas,
   estadoCiclo,
   PROVA_DURACAO_MS,
   salvarProva,
+  salvarTempo,
   sortear,
   sortearProva,
   type Prova,
@@ -43,6 +45,8 @@ type Tela = 'home' | 'revisao' | 'fim' | 'simulado' | 'resultado' | 'data-prova'
 type SimuladoAtivo = {
   id: string
   itens: QuestaoDaProva[]
+  /** Quando começou: o cronômetro conta daqui */
+  iniciadoEm: number
   /** Presente no simulado de prova (90 questões, 1h30) */
   prova?: { iniciadaEm: number }
   inicial?: EstadoSalvo
@@ -94,6 +98,8 @@ export default function App() {
   const [erroQuestoes, setErroQuestoes] = useState<string | null>(null)
   const [simulado, setSimulado] = useState<SimuladoAtivo | null>(null)
   const [provas, setProvas] = useState<Prova[] | null>(null)
+  // Segundos gastos em cada simulado normal; null = indisponível (tabela simulado_tempos ainda não criada)
+  const [tempos, setTempos] = useState<Map<string, number> | null>(null)
   // null = indisponível (tabela revisoes ainda não criada)
   const [cardsPorDia, setCardsPorDia] = useState<CardsPorDia | null>(null)
   const [fimHistorico, setFimHistorico] = useState(() => diaSP(new Date()))
@@ -129,6 +135,7 @@ export default function App() {
     setErroQuestoes(null)
     setSimulado(null)
     setProvas(null)
+    setTempos(null)
     setCardsPorDia(null)
     setComemoracao(null)
     retomouProva.current = false
@@ -176,6 +183,11 @@ export default function App() {
     carregarProvas()
       .then((ps) => atual() && setProvas(ps))
       .catch((e: Error) => console.warn('Histórico de provas indisponível:', e.message))
+
+    // Tempo dos simulados é opcional (tabela simulado_tempos)
+    carregarTempos()
+      .then((ts) => atual() && setTempos(ts))
+      .catch((e: Error) => console.warn('Tempo dos simulados indisponível:', e.message))
 
     // Simulado é opcional: se as tabelas ainda não existem, os flashcards continuam funcionando
     setErroQuestoes(null)
@@ -271,7 +283,7 @@ export default function App() {
     if (!questoes || !ciclo) return
     const porNumero = new Map(questoes.map((q) => [q.numero, q]))
     const itens = sortear(ciclo.restantes, quantidade).map((n) => ({ questao: porNumero.get(n)!, ciclo: ciclo.ciclo }))
-    setSimulado({ id: crypto.randomUUID(), itens, respostas: [] })
+    setSimulado({ id: crypto.randomUUID(), itens, iniciadoEm: Date.now(), respostas: [] })
     setTela('simulado')
     window.scrollTo({ top: 0 })
   }
@@ -287,7 +299,7 @@ export default function App() {
       itens: itens.map((x) => ({ numero: x.questao.numero, ciclo: x.ciclo })),
       estado: { idx: 0, marcadas: {} },
     })
-    setSimulado({ id, itens, prova: { iniciadaEm }, respostas: [] })
+    setSimulado({ id, itens, iniciadoEm: iniciadaEm, prova: { iniciadaEm }, respostas: [] })
     setTela('simulado')
     window.scrollTo({ top: 0 })
   }
@@ -304,7 +316,7 @@ export default function App() {
       return questao ? [{ questao, ciclo: x.ciclo }] : []
     })
     if (itens.length === 0) return guardarProva(userId, null)
-    setSimulado({ id: g.id, itens, prova: { iniciadaEm: g.iniciadaEm }, inicial: g.estado, respostas: [] })
+    setSimulado({ id: g.id, itens, iniciadoEm: g.iniciadaEm, prova: { iniciadaEm: g.iniciadaEm }, inicial: g.estado, respostas: [] })
     setTela('simulado')
   }, [questoes, userId])
 
@@ -349,6 +361,15 @@ export default function App() {
       }
       setProvas((ps) => (ps ? [registro, ...ps.filter((p) => p.id !== registro.id)] : ps))
       salvarProva(userId, registro).catch((e: Error) => console.warn('Falha ao salvar histórico da prova:', e.message))
+    } else {
+      const tempo = {
+        id: simulado.id,
+        iniciado_em: new Date(simulado.iniciadoEm).toISOString(),
+        finalizado_em: new Date().toISOString(),
+        tempo_s: info.tempoUsadoS,
+      }
+      setTempos((ts) => (ts ? new Map(ts).set(tempo.id, tempo.tempo_s) : ts))
+      salvarTempo(userId, tempo).catch((e: Error) => console.warn('Falha ao salvar o tempo do simulado:', e.message))
     }
     setSimulado({ ...simulado, respostas: rs, info })
     setTela('resultado')
@@ -403,6 +424,7 @@ export default function App() {
         userId={userId}
         itens={simulado.itens}
         simuladoId={simulado.id}
+        iniciadoEm={simulado.iniciadoEm}
         prova={simulado.prova}
         inicial={simulado.inicial}
         onEstado={simulado.prova ? onEstadoProva : undefined}
@@ -423,6 +445,7 @@ export default function App() {
         respostas={simulado.respostas}
         brancos={simulado.info?.brancos}
         prova={simulado.prova && simulado.info ? { ...simulado.info, duracaoS: PROVA_DURACAO_MS / 1000 } : undefined}
+        tempoS={!simulado.prova ? simulado.info?.tempoUsadoS : undefined}
         onAtualizada={onRespondida}
         onVoltar={() => {
           setSimulado(null)
@@ -487,6 +510,7 @@ export default function App() {
             porTempo: registro.tempo_usado_s >= duracaoS,
           }
         }
+        tempoS={registro ? undefined : tempos?.get(simuladoAberto)}
         onAtualizada={onRespondida}
         onVoltar={() => {
           setSimuladoAberto(null)
@@ -501,6 +525,7 @@ export default function App() {
         respostas={respostas}
         cardsPorDia={cardsPorDia}
         provas={new Set(provas?.map((p) => p.id))}
+        tempos={new Map([...(tempos ?? []), ...(provas ?? []).map((p) => [p.id, p.tempo_usado_s] as const)])}
         fim={fimHistorico}
         onFim={setFimHistorico}
         onAbrirSimulado={(id) => {

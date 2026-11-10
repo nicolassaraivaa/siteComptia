@@ -8,6 +8,7 @@ import {
   type QuestaoDaProva,
   type Resposta,
 } from '../lib/questoes'
+import Cronometro from './Cronometro'
 import QuestaoVisao from './QuestaoVisao'
 
 export type EstadoSalvo = { idx: number; marcadas: Record<number, string[]> }
@@ -18,6 +19,8 @@ type Props = {
   userId: string
   itens: QuestaoDaProva[]
   simuladoId: string
+  /** Quando o simulado começou: o cronômetro e o tempo salvo contam daqui */
+  iniciadoEm: number
   /** Modo prova: timer de 1h30 a partir deste instante e questões em branco contam como erradas */
   prova?: { iniciadaEm: number }
   /** Estado para retomar (prova interrompida por recarregar a página) */
@@ -32,18 +35,11 @@ type Props = {
 /** Marca usada nas simulações (sem alternativas) quando você diz que já resolveu */
 const RESOLVIDA = 'resolvida'
 
-function formatarTempo(ms: number): string {
-  const s = Math.max(0, Math.ceil(ms / 1000))
-  const h = Math.floor(s / 3600)
-  const m = Math.floor((s % 3600) / 60)
-  const seg = String(s % 60).padStart(2, '0')
-  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${seg}` : `${m}:${seg}`
-}
-
 export default function Simulado({
   userId,
   itens,
   simuladoId,
+  iniciadoEm,
   prova,
   inicial,
   onEstado,
@@ -167,11 +163,13 @@ export default function Simulado({
         return
       }
       setSalvando(false)
-      const tempoUsadoS = prova ? Math.round(Math.min(Date.now() - prova.iniciadaEm, PROVA_DURACAO_MS) / 1000) : 0
+      const tempoUsadoS = Math.round(
+        prova ? Math.min(Date.now() - prova.iniciadaEm, PROVA_DURACAO_MS) / 1000 : (Date.now() - iniciadoEm) / 1000,
+      )
       const brancos = itens.filter((x) => (marcadas[x.questao.numero] ?? []).length === 0).map((x) => x.questao.numero)
       onFinalizar(respostas, { emBranco: brancos.length, brancos, tempoUsadoS, porTempo })
     },
-    [itens, marcadas, salvas, simuladoId, prova, userId, onFinalizar],
+    [itens, marcadas, salvas, simuladoId, iniciadoEm, prova, userId, onFinalizar],
   )
 
   async function pedirFinalizar(forcar = false) {
@@ -258,15 +256,10 @@ export default function Simulado({
         <span className="text-sm text-muted tabular-nums">
           {idx + 1}/{itens.length}
         </span>
-        {restanteMs !== null && (
-          <span
-            className="rounded-full border-2 px-3 py-1 text-sm font-extrabold tabular-nums"
-            style={{ borderColor: corTimer, color: corTimer }}
-            role="timer"
-            aria-label={`Tempo restante ${formatarTempo(restanteMs)}`}
-          >
-            {formatarTempo(restanteMs)}
-          </span>
+        {prova ? (
+          <Cronometro inicio={prova.iniciadaEm} limiteMs={PROVA_DURACAO_MS} cor={corTimer} />
+        ) : (
+          <Cronometro inicio={iniciadoEm} />
         )}
       </header>
       <p className="sr-only" aria-live="assertive">

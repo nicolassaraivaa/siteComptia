@@ -28,6 +28,17 @@ export function formatarDataProva(dataProva: string): string {
   return fmtDataLonga.format(new Date(`${dataProva}T12:00:00Z`))
 }
 
+/** Duração por extenso: "45 s", "8 min 12 s", "1 h 05 min" */
+export function formatarSegundos(total: number): string {
+  const s = Math.max(0, Math.round(total))
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const seg = s % 60
+  if (h > 0) return `${h} h ${String(m).padStart(2, '0')} min`
+  if (m > 0) return seg > 0 ? `${m} min ${seg} s` : `${m} min`
+  return `${seg} s`
+}
+
 /** Soma (ou subtrai) dias corridos de uma data YYYY-MM-DD */
 export function somarDias(dia: string, n: number): string {
   const d = new Date(`${dia}T12:00:00Z`)

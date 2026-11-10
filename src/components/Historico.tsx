@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { diaSP, somarDias } from '../lib/datas'
+import { diaSP, formatarSegundos, somarDias } from '../lib/datas'
 import { questoesPorDia, simuladosFeitos, type CardsPorDia, type SimuladoFeito } from '../lib/historico'
 import type { Resposta } from '../lib/questoes'
 
@@ -9,6 +9,8 @@ type Props = {
   cardsPorDia: CardsPorDia | null
   /** ids dos simulados de prova (90 questões), para identificá-los na lista */
   provas: Set<string>
+  /** Segundos gastos em cada simulado, pelo id (os antigos não têm) */
+  tempos: Map<string, number>
   /** último dia da janela de 7 dias (fica no App para não se perder ao abrir um simulado) */
   fim: string
   onFim: (dia: string) => void
@@ -45,7 +47,7 @@ function pct(certas: number, total: number): number | null {
 }
 
 /** Questões e cards por dia, de 7 em 7 dias */
-export default function Historico({ respostas, cardsPorDia, provas, fim, onFim: setFim, onAbrirSimulado, onVoltar }: Props) {
+export default function Historico({ respostas, cardsPorDia, provas, tempos, fim, onFim: setFim, onAbrirSimulado, onVoltar }: Props) {
   const hoje = diaSP(new Date())
   const porDiaQuestoes = useMemo(() => questoesPorDia(respostas), [respostas])
   const simulados = useMemo(() => simuladosFeitos(respostas), [respostas])
@@ -163,7 +165,14 @@ export default function Historico({ respostas, cardsPorDia, provas, fim, onFim: 
         ) : (
           <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
             {simuladosDaSemana.map((x) => (
-              <LinhaSimulado key={x.id} s={x} prova={provas.has(x.id)} hoje={hoje} onAbrir={() => onAbrirSimulado(x.id)} />
+              <LinhaSimulado
+                key={x.id}
+                s={x}
+                prova={provas.has(x.id)}
+                tempoS={tempos.get(x.id)}
+                hoje={hoje}
+                onAbrir={() => onAbrirSimulado(x.id)}
+              />
             ))}
           </ul>
         )}
@@ -273,7 +282,9 @@ function Grafico({ titulo, dias, hoje, valor, unidade }: GraficoProps) {
 
 const fmtHora = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })
 
-function LinhaSimulado({ s, prova, hoje, onAbrir }: { s: SimuladoFeito; prova: boolean; hoje: string; onAbrir: () => void }) {
+type LinhaSimuladoProps = { s: SimuladoFeito; prova: boolean; tempoS: number | undefined; hoje: string; onAbrir: () => void }
+
+function LinhaSimulado({ s, prova, tempoS, hoje, onAbrir }: LinhaSimuladoProps) {
   const corrigidas = s.total - s.pendentes
   const acerto = pct(s.certas, corrigidas)
   const quando = s.dia === hoje ? 'Hoje' : s.dia === somarDias(hoje, -1) ? 'Ontem' : `${semana(s.dia)} ${fmtDiaMes.format(data(s.dia))}`
@@ -290,6 +301,7 @@ function LinhaSimulado({ s, prova, hoje, onAbrir }: { s: SimuladoFeito; prova: b
           </span>
           <span className="block text-xs text-muted">
             {prova ? 'Simulado de prova' : 'Simulado'} · {plural(s.total, 'questão', 'questões')}
+            {tempoS !== undefined && <span className="tabular-nums"> · {formatarSegundos(tempoS)}</span>}
           </span>
         </span>
         <span className="text-right">

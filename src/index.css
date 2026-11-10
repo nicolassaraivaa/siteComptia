@@ -86,6 +86,22 @@
   animation: revelar 180ms ease-out both;
 }
 
+/* cronômetro do simulado: o dígito que muda sobe de leve e aparece, sem chamar atenção */
+@keyframes digito {
+  from {
+    opacity: 0;
+    transform: translateY(0.55em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-digito {
+  animation: digito 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @utility foco {
   &:focus-visible {
     outline: 2px solid var(--ink);
