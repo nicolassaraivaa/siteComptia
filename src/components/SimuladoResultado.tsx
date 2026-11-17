@@ -1,8 +1,17 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { DOMINIO_COR, DOMINIOS } from '../config'
 import type { Dominio } from '../lib/cards'
 import { formatarSegundos } from '../lib/datas'
-import { errou, salvarResposta, type Questao, type Resposta, type Resultado } from '../lib/questoes'
+import {
+  errou,
+  reincidencia,
+  resultadosAnteriores,
+  salvarResposta,
+  type Questao,
+  type Reincidencia,
+  type Resposta,
+  type Resultado,
+} from '../lib/questoes'
 import { IconeCronometro } from './Cronometro'
 import QuestaoVisao from './QuestaoVisao'
 
@@ -10,6 +19,8 @@ type Props = {
   userId: string
   questoes: Questao[]
   respostas: Resposta[]
+  /** Todas as respostas da conta, para comparar cada questão com a volta anterior */
+  todasRespostas: Resposta[]
   onAtualizada: (r: Resposta) => void
   onVoltar: () => void
   /** Questões que ficaram em branco (contaram como erradas) */
@@ -45,10 +56,28 @@ const COR: Record<Resultado, string> = {
   pendente: 'var(--muted)',
 }
 
+const REINCIDENCIA: Record<Reincidencia, { titulo: string; texto: string; etiqueta: string; filtro: string; cor: string }> = {
+  'de-novo': {
+    titulo: 'Errou de novo',
+    texto: 'já tinha errado na volta anterior',
+    etiqueta: 'de novo',
+    filtro: 'erros repetidos',
+    cor: 'var(--d2)',
+  },
+  'primeira-vez': {
+    titulo: 'Errou pela 1ª vez',
+    texto: 'tinha acertado na volta anterior',
+    etiqueta: '1ª vez',
+    filtro: 'erros novos',
+    cor: 'var(--d4)',
+  },
+}
+
 export default function SimuladoResultado({
   userId,
   questoes,
   respostas: iniciais,
+  todasRespostas,
   onAtualizada,
   onVoltar,
   doHistorico,
@@ -58,7 +87,30 @@ export default function SimuladoResultado({
 }: Props) {
   const [respostas, setRespostas] = useState(iniciais)
   const [erro, setErro] = useState<string | null>(null)
+  const [filtro, setFiltro] = useState<Reincidencia | null>(null)
   const porQuestao = new Map(questoes.map((q) => [q.numero, q]))
+
+  // Cada questão comparada com a volta anterior (vazio na 1ª volta)
+  const anteriores = useMemo(() => resultadosAnteriores(todasRespostas, iniciais), [todasRespostas, iniciais])
+  const reinc = (r: Resposta) => reincidencia(r.resultado, anteriores.get(r.questao))
+  const recuperou = (r: Resposta) => {
+    const a = anteriores.get(r.questao)
+    return r.resultado === 'certa' && a !== undefined && errou(a)
+  }
+  const deNovo = respostas.filter((r) => reinc(r) === 'de-novo').length
+  const primeiraVez = respostas.filter((r) => reinc(r) === 'primeira-vez').length
+  const errosSemAnterior = respostas.filter((r) => errou(r.resultado) && reinc(r) === null).length
+  const recuperadas = respostas.filter(recuperou).length
+  const visiveis = respostas.map((r, i) => ({ r, i })).filter(({ r }) => filtro === null || reinc(r) === filtro)
+
+  function filtrar(f: Reincidencia) {
+    const novo = filtro === f ? null : f
+    setFiltro(novo)
+    if (novo) {
+      const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      document.getElementById('res-questoes')?.scrollIntoView({ behavior: suave ? 'smooth' : 'auto', block: 'start' })
+    }
+  }
 
   const corrigidas = respostas.filter((r) => r.resultado !== 'pendente')
   const certas = corrigidas.filter((r) => r.resultado === 'certa').length
@@ -173,6 +225,61 @@ export default function SimuladoResultado({
         )}
       </section>
 
+      {anteriores.size > 0 && (
+        <section className="mt-6" aria-labelledby="res-volta">
+          <h2 id="res-volta" className="px-1 font-bold">
+            Comparado com a volta anterior
+          </h2>
+          <p className="mt-1 mb-3 px-1 text-sm text-muted">
+            {deNovo + primeiraVez === 0
+              ? 'Nenhum erro em questão que você já tinha feito.'
+              : 'Toque num número para ver só essas questões na correção.'}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {(['de-novo', 'primeira-vez'] as const).map((id) => {
+              const valor = id === 'de-novo' ? deNovo : primeiraVez
+              const info = REINCIDENCIA[id]
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => filtrar(id)}
+                  disabled={valor === 0}
+                  aria-pressed={filtro === id}
+                  className={`foco rounded-2xl border-2 bg-surface p-4 text-left transition-colors hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-50 ${
+                    filtro === id ? 'border-ink' : 'border-line'
+                  }`}
+                >
+                  <span className="block text-3xl font-extrabold tabular-nums" style={{ color: info.cor }}>
+                    {valor}
+                  </span>
+                  <span className="mt-1 block text-sm font-bold">{info.titulo}</span>
+                  <span className="block text-xs text-muted">{info.texto}</span>
+                </button>
+              )
+            })}
+          </div>
+          {(recuperadas > 0 || errosSemAnterior > 0) && (
+            <ul className="mt-3 flex flex-col gap-1 px-1 text-sm text-muted">
+              {recuperadas > 0 && (
+                <li>
+                  <span className="font-bold" style={{ color: 'var(--good)' }}>
+                    {recuperadas}
+                  </span>{' '}
+                  {recuperadas === 1 ? 'questão que você tinha errado agora está certa' : 'questões que você tinha errado agora estão certas'}.
+                </li>
+              )}
+              {errosSemAnterior > 0 && (
+                <li>
+                  {errosSemAnterior} {errosSemAnterior === 1 ? 'erro foi em questão' : 'erros foram em questões'} que você ainda
+                  não tinha feito.
+                </li>
+              )}
+            </ul>
+          )}
+        </section>
+      )}
+
       {porDominio.length > 0 && (
         <section className="mt-6" aria-labelledby="res-dominios">
           <h2 id="res-dominios" className="mb-3 px-1 font-bold">
@@ -206,9 +313,21 @@ export default function SimuladoResultado({
       )}
 
       <section className="mt-6" aria-labelledby="res-questoes">
-        <h2 id="res-questoes" className="mb-3 px-1 font-bold">
-          Correção
-        </h2>
+        <div className="mb-3 flex items-baseline justify-between gap-3 px-1">
+          <h2 id="res-questoes" className="scroll-mt-4 font-bold">
+            Correção
+            {filtro && <span className="font-normal text-muted"> · {REINCIDENCIA[filtro].filtro}</span>}
+          </h2>
+          {filtro && (
+            <button
+              type="button"
+              onClick={() => setFiltro(null)}
+              className="foco shrink-0 rounded-full px-2 py-1 text-sm font-medium text-muted underline underline-offset-2 hover:text-ink"
+            >
+              Mostrar todas
+            </button>
+          )}
+        </div>
         <div aria-live="polite">
           {erro && (
             <p className="mb-3 text-sm text-[var(--d2)]" role="alert">
@@ -216,10 +335,13 @@ export default function SimuladoResultado({
             </p>
           )}
         </div>
+        {filtro && visiveis.length === 0 && <p className="px-1 text-sm text-muted">Nenhuma questão neste filtro.</p>}
         <ul className="flex flex-col gap-2">
-          {respostas.map((r, i) => {
+          {visiveis.map(({ r, i }) => {
             const q = porQuestao.get(r.questao)
             if (!q) return null
+            const rq = reinc(r)
+            const anterior = anteriores.get(r.questao)
             return (
               <li key={r.questao}>
                 <details
@@ -231,11 +353,14 @@ export default function SimuladoResultado({
                     <span className="min-w-0 flex-1 truncate text-sm">{q.enunciado_pt}</span>
                     <span className="shrink-0 text-xs font-bold" style={{ color: COR[r.resultado] }}>
                       {brancos.includes(r.questao) ? 'Em branco' : ROTULO[r.resultado]}
+                      {rq && <span className="font-medium"> · {REINCIDENCIA[rq].etiqueta}</span>}
+                      {recuperou(r) && <span className="font-medium"> · antes errou</span>}
                     </span>
                   </summary>
                   <div className="px-4">
                     <p className="mb-3 text-xs text-muted">
                       Questão {q.numero} do PDF · domínio {q.dominio}
+                      {anterior !== undefined && anterior !== 'pendente' && ` · na volta anterior: ${ROTULO[anterior].toLowerCase()}`}
                       {errou(r.resultado) && ' · foi para os flashcards'}
                     </p>
                     <QuestaoVisao q={q} marcadas={r.marcadas} revelar />

@@ -100,6 +100,31 @@ export function errou(r: Resultado): boolean {
   return r === 'errada' || r === 'parcial'
 }
 
+/**
+ * Resultado de cada questão na volta anterior: a resposta de maior ciclo abaixo do ciclo da
+ * resposta atual. Questões feitas pela primeira vez ficam fora do mapa.
+ */
+export function resultadosAnteriores(todas: Resposta[], atuais: Resposta[]): Map<number, Resultado> {
+  const cicloAtual = new Map(atuais.map((r) => [r.questao, r.ciclo]))
+  const anterior = new Map<number, Resposta>()
+  for (const r of todas) {
+    const ciclo = cicloAtual.get(r.questao)
+    if (ciclo === undefined || r.ciclo >= ciclo) continue
+    const ja = anterior.get(r.questao)
+    if (!ja || r.ciclo > ja.ciclo) anterior.set(r.questao, r)
+  }
+  return new Map([...anterior].map(([questao, r]) => [questao, r.resultado]))
+}
+
+/** Um erro comparado com a volta anterior: já tinha errado (de novo) ou tinha acertado (1ª vez) */
+export type Reincidencia = 'de-novo' | 'primeira-vez'
+
+/** null quando não é erro ou não há resultado anterior para comparar */
+export function reincidencia(atual: Resultado, anterior: Resultado | undefined): Reincidencia | null {
+  if (!errou(atual) || anterior === undefined || anterior === 'pendente') return null
+  return errou(anterior) ? 'de-novo' : 'primeira-vez'
+}
+
 export type EstadoCiclo = {
   ciclo: number
   vistas: Set<number>

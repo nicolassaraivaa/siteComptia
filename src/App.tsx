@@ -443,6 +443,7 @@ export default function App() {
         userId={userId}
         questoes={simulado.itens.map((x) => x.questao)}
         respostas={simulado.respostas}
+        todasRespostas={respostas}
         brancos={simulado.info?.brancos}
         prova={simulado.prova && simulado.info ? { ...simulado.info, duracaoS: PROVA_DURACAO_MS / 1000 } : undefined}
         tempoS={!simulado.prova ? simulado.info?.tempoUsadoS : undefined}
@@ -494,6 +495,7 @@ export default function App() {
         userId={userId}
         questoes={doSimulado.flatMap((r) => porNumero.get(r.questao) ?? [])}
         respostas={doSimulado}
+        todasRespostas={respostas}
         doHistorico={{
           titulo: inicio.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }),
         }}
