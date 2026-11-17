@@ -11,7 +11,10 @@ import {
 import Cronometro from './Cronometro'
 import QuestaoVisao from './QuestaoVisao'
 
-export type EstadoSalvo = { idx: number; marcadas: Record<number, string[]> }
+/** Pausas da prova: o tempo pausado não conta. `desde` é o início da pausa atual (null = rodando) */
+export type Pausa = { totalMs: number; desde: number | null }
+
+export type EstadoSalvo = { idx: number; marcadas: Record<number, string[]>; pausa?: Pausa }
 
 export type InfoFinal = { emBranco: number; brancos: number[]; tempoUsadoS: number; porTempo: boolean }
 
@@ -54,7 +57,9 @@ export default function Simulado({
   const [erro, setErro] = useState<string | null>(null)
   const [confirmandoFim, setConfirmandoFim] = useState(false)
   const [agora, setAgora] = useState(() => Date.now())
+  const [pausa, setPausa] = useState<Pausa>(inicial?.pausa ?? { totalMs: 0, desde: null })
   const encerrando = useRef(false)
+  const botaoPausa = useRef<HTMLButtonElement>(null)
 
   const { questao: q, ciclo } = itens[idx]
   const ultima = idx === itens.length - 1
@@ -62,15 +67,31 @@ export default function Simulado({
   const respondidas = itens.filter((x) => (marcadas[x.questao.numero] ?? []).length > 0).length
   const emBranco = itens.length - respondidas
 
-  const restanteMs = prova ? prova.iniciadaEm + PROVA_DURACAO_MS - agora : null
+  // O relógio da prova anda só fora das pausas: o início "efetivo" é empurrado pelo tempo pausado
+  const pausada = prova !== undefined && pausa.desde !== null
+  const inicioProva = prova ? prova.iniciadaEm + pausa.totalMs : 0
+  const restanteMs = prova ? inicioProva + PROVA_DURACAO_MS - (pausa.desde ?? agora) : null
   const acabouTempo = restanteMs !== null && restanteMs <= 0
 
   useEffect(() => {
-    onEstado?.({ idx, marcadas })
-  }, [idx, marcadas, onEstado])
+    onEstado?.({ idx, marcadas, pausa })
+  }, [idx, marcadas, pausa, onEstado])
+
+  function pausar() {
+    if (!prova || pausada || acabouTempo || salvando) return
+    setConfirmandoFim(false)
+    setPausa((p) => ({ ...p, desde: Date.now() }))
+  }
+
+  function continuar() {
+    const t = Date.now()
+    setPausa((p) => (p.desde === null ? p : { totalMs: p.totalMs + (t - p.desde), desde: null }))
+    setAgora(t)
+    requestAnimationFrame(() => botaoPausa.current?.focus())
+  }
 
   function alternar(letra: string) {
-    if (acabouTempo) return
+    if (acabouTempo || pausada) return
     setMarcadas((m) => {
       const atual = m[q.numero] ?? []
       let nova: string[]
@@ -112,7 +133,7 @@ export default function Simulado({
   }, [marcadas, q, ciclo, salvas, simuladoId, userId, onRespondida])
 
   async function irPara(novo: number) {
-    if (salvando || acabouTempo) return
+    if (salvando || acabouTempo || pausada) return
     if (!(await salvarAtual())) return
     setConfirmandoFim(false)
     setIdx(novo)
@@ -163,13 +184,16 @@ export default function Simulado({
         return
       }
       setSalvando(false)
+      // na prova, as pausas não entram no tempo usado
       const tempoUsadoS = Math.round(
-        prova ? Math.min(Date.now() - prova.iniciadaEm, PROVA_DURACAO_MS) / 1000 : (Date.now() - iniciadoEm) / 1000,
+        prova
+          ? Math.min((pausa.desde ?? Date.now()) - (prova.iniciadaEm + pausa.totalMs), PROVA_DURACAO_MS) / 1000
+          : (Date.now() - iniciadoEm) / 1000,
       )
       const brancos = itens.filter((x) => (marcadas[x.questao.numero] ?? []).length === 0).map((x) => x.questao.numero)
       onFinalizar(respostas, { emBranco: brancos.length, brancos, tempoUsadoS, porTempo })
     },
-    [itens, marcadas, salvas, simuladoId, iniciadoEm, prova, userId, onFinalizar],
+    [itens, marcadas, salvas, simuladoId, iniciadoEm, prova, pausa, userId, onFinalizar],
   )
 
   async function pedirFinalizar(forcar = false) {
@@ -212,7 +236,7 @@ export default function Simulado({
   // Atalhos: letras marcam alternativas, setas navegam
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return
+      if (pausada || e.metaKey || e.ctrlKey || e.altKey || e.repeat) return
       const alvo = e.target as HTMLElement
       if (alvo.tagName === 'INPUT' || alvo.tagName === 'TEXTAREA') return
       const letra = e.key.toUpperCase()
@@ -233,7 +257,12 @@ export default function Simulado({
     restanteMs === null ? null : restanteMs <= 60_000 ? 'Falta menos de 1 minuto.' : restanteMs <= 10 * 60_000 ? 'Faltam 10 minutos ou menos.' : null
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-xl flex-col px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-36 sm:pb-10">
+    <>
+    {/* pausada: a prova fica inacessível (sem clique, teclado ou leitor de tela) até continuar */}
+    <div
+      inert={pausada}
+      className="mx-auto flex min-h-dvh max-w-xl flex-col px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-36 sm:pb-10"
+    >
       <h1 className="sr-only">{prova ? 'Simulado de prova' : 'Simulado'}</h1>
       <header className="mb-5 flex items-center gap-3">
         <button
@@ -257,7 +286,19 @@ export default function Simulado({
           {idx + 1}/{itens.length}
         </span>
         {prova ? (
-          <Cronometro inicio={prova.iniciadaEm} limiteMs={PROVA_DURACAO_MS} cor={corTimer} />
+          <>
+            <Cronometro inicio={inicioProva} limiteMs={PROVA_DURACAO_MS} cor={corTimer} parado={pausa.desde ?? undefined} />
+            <button
+              ref={botaoPausa}
+              onClick={pausar}
+              disabled={salvando || acabouTempo}
+              aria-label="Pausar a prova"
+              title="Pausar"
+              className="foco -mr-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-40"
+            >
+              <IconePausa />
+            </button>
+          </>
         ) : (
           <Cronometro inicio={iniciadoEm} />
         )}
@@ -360,5 +401,44 @@ export default function Simulado({
         </div>
       </div>
     </div>
+
+    {pausada && (
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pausa-titulo"
+        aria-describedby="pausa-texto"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-bg/50 p-6 backdrop-blur-2xl"
+      >
+        <div className="flex w-full max-w-sm flex-col items-center rounded-3xl border border-line bg-surface p-7 text-center shadow-xl">
+          <h2 id="pausa-titulo" className="text-2xl font-extrabold tracking-tight">
+            Prova pausada
+          </h2>
+          <p id="pausa-texto" className="mt-2 text-muted">
+            O tempo parou. A questão volta quando você continuar.
+          </p>
+          <div className="mt-5">
+            <Cronometro inicio={inicioProva} limiteMs={PROVA_DURACAO_MS} cor={corTimer} parado={pausa.desde ?? undefined} />
+          </div>
+          <button
+            autoFocus
+            onClick={continuar}
+            className="foco mt-6 w-full rounded-2xl bg-primary py-4 text-lg font-bold text-on-primary transition-opacity hover:opacity-90"
+          >
+            Continuar
+          </button>
+        </div>
+      </div>
+    )}
+    </>
+  )
+}
+
+function IconePausa() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+      <rect x="6" y="5" width="4" height="14" rx="1.2" />
+      <rect x="14" y="5" width="4" height="14" rx="1.2" />
+    </svg>
   )
 }

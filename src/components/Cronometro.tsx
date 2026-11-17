@@ -7,6 +7,8 @@ type Props = {
   limiteMs?: number
   /** Cor da borda e do número (a prova muda de cor perto do fim) */
   cor?: string
+  /** Prova pausada: o relógio fica congelado no valor deste instante */
+  parado?: number
 }
 
 /** "4:07" ou "1:02:09" */
@@ -17,20 +19,22 @@ function relogio(total: number): string {
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`
 }
 
-function segundos(inicio: number, limiteMs: number | undefined): number {
-  const decorrido = Date.now() - inicio
+function segundos(inicio: number, limiteMs: number | undefined, parado?: number): number {
+  const decorrido = (parado ?? Date.now()) - inicio
   if (limiteMs === undefined) return Math.max(0, Math.floor(decorrido / 1000))
   return Math.max(0, Math.ceil((limiteMs - decorrido) / 1000))
 }
 
 /** Cronômetro do simulado: conta o tempo desde o início (ou o que falta, na prova) */
-export default function Cronometro({ inicio, limiteMs, cor }: Props) {
-  const [valor, setValor] = useState(() => segundos(inicio, limiteMs))
+export default function Cronometro({ inicio, limiteMs, cor, parado }: Props) {
+  const [vivo, setVivo] = useState(() => segundos(inicio, limiteMs, parado))
   // Confere 4x por segundo para a troca cair junto com a virada do segundo; só redesenha quando o número muda
   useEffect(() => {
-    const id = setInterval(() => setValor(segundos(inicio, limiteMs)), 250)
+    if (parado !== undefined) return
+    const id = setInterval(() => setVivo(segundos(inicio, limiteMs)), 250)
     return () => clearInterval(id)
-  }, [inicio, limiteMs])
+  }, [inicio, limiteMs, parado])
+  const valor = parado !== undefined ? segundos(inicio, limiteMs, parado) : vivo
 
   const texto = relogio(valor)
   return (

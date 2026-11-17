@@ -49,7 +49,7 @@ export default function SimuladoCard({ total, estado, indisponivel, onComecar, o
           <button
             type="button"
             onClick={() => {
-              if (window.confirm('Começar o simulado de prova? São 90 questões e 1h30 de tempo, sem pausa. Questões em branco contam como erradas.'))
+              if (window.confirm('Começar o simulado de prova? São 90 questões e 1h30 de tempo. Você pode pausar: o tempo para e a questão fica escondida até continuar. Questões em branco contam como erradas.'))
                 onComecarProva()
             }}
             className="foco flex w-full flex-col items-center rounded-2xl border-2 border-ink py-3 transition-colors hover:bg-surface-2"

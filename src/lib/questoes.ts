@@ -55,7 +55,11 @@ export async function carregarRespostas(): Promise<Resposta[]> {
     const { data, error } = await supabase
       .from('simulado_respostas')
       .select('questao, ciclo, simulado_id, marcadas, resultado, respondida_em')
+      // desempate pela chave: várias respostas têm o mesmo horário (as em branco ao finalizar),
+      // e sem ordem total a paginação pode pular ou repetir linhas entre as páginas
       .order('respondida_em')
+      .order('questao')
+      .order('ciclo')
       .range(from, from + PAGINA - 1)
     if (error) throw error
     todas.push(...(data as Resposta[]))
