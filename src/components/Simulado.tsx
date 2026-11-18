@@ -61,6 +61,8 @@ export default function Simulado({
   const [confirmandoFim, setConfirmandoFim] = useState(false)
   const [agora, setAgora] = useState(() => Date.now())
   const [pausa, setPausa] = useState<Pausa>(inicial?.pausa ?? { totalMs: 0, desde: null })
+  // Prova: o X abre a escolha entre encerrar e sair para continuar depois
+  const [saindo, setSaindo] = useState(false)
   const encerrando = useRef(false)
   const botaoPausa = useRef<HTMLButtonElement>(null)
 
@@ -75,6 +77,7 @@ export default function Simulado({
   const inicioProva = prova ? prova.iniciadaEm + pausa.totalMs : 0
   const restanteMs = prova ? inicioProva + PROVA_DURACAO_MS - (pausa.desde ?? agora) : null
   const acabouTempo = restanteMs !== null && restanteMs <= 0
+  const mostrarSaida = saindo && !acabouTempo
 
   useEffect(() => {
     onEstado?.({ idx, marcadas, pausa })
@@ -209,14 +212,21 @@ export default function Simulado({
     await finalizar(false)
   }
 
+  /** Sai da prova sem encerrar: pausa e guarda na hora (o componente desmonta antes do efeito salvar) */
+  function sairDepois() {
+    onEstado?.({ idx, marcadas, pausa: pausa.desde === null ? { ...pausa, desde: Date.now() } : pausa })
+    onSair()
+  }
+
+  function encerrar() {
+    setSaindo(false)
+    void finalizar(false)
+  }
+
   async function sair() {
     if (prova) {
-      const msg =
-        emBranco > 0
-          ? `Encerrar a prova agora? ${emBranco} ${emBranco === 1 ? 'questão em branco conta' : 'questões em branco contam'} como erradas.`
-          : 'Encerrar a prova agora e ver o resultado?'
-      if (!window.confirm(msg)) return
-      await finalizar(false)
+      setConfirmandoFim(false)
+      setSaindo(true)
       return
     }
     if (!window.confirm('Sair do simulado? As questões já respondidas ficam salvas e não voltam no sorteio deste ciclo.')) return
@@ -239,7 +249,8 @@ export default function Simulado({
   // Atalhos: letras marcam alternativas, setas navegam
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (pausada || e.metaKey || e.ctrlKey || e.altKey || e.repeat) return
+      if (mostrarSaida && e.key === 'Escape') return setSaindo(false)
+      if (pausada || mostrarSaida || e.metaKey || e.ctrlKey || e.altKey || e.repeat) return
       const alvo = e.target as HTMLElement
       if (alvo.tagName === 'INPUT' || alvo.tagName === 'TEXTAREA') return
       const letra = e.key.toUpperCase()
@@ -263,7 +274,7 @@ export default function Simulado({
     <>
     {/* pausada: a prova fica inacessível (sem clique, teclado ou leitor de tela) até continuar */}
     <div
-      inert={pausada}
+      inert={pausada || mostrarSaida}
       className="mx-auto flex min-h-dvh max-w-xl flex-col px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-36 sm:pb-10"
     >
       <h1 className="sr-only">{prova ? 'Simulado de prova' : 'Simulado'}</h1>
@@ -431,7 +442,7 @@ export default function Simulado({
             Continuar
           </button>
           <button
-            onClick={onSair}
+            onClick={sairDepois}
             className="foco mt-2 w-full rounded-2xl border border-line py-3 font-bold transition-colors hover:bg-surface-2"
           >
             Sair e continuar depois
@@ -439,6 +450,52 @@ export default function Simulado({
           <p className="mt-3 text-xs text-muted">
             A prova fica guardada neste navegador, pausada. Para voltar, toque em "Retomar simulado de prova" na tela inicial.
           </p>
+        </div>
+      </div>
+    )}
+
+    {mostrarSaida && (
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sair-titulo"
+        aria-describedby="sair-texto"
+        onClick={(e) => e.target === e.currentTarget && setSaindo(false)}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-bg/50 p-6 backdrop-blur-2xl"
+      >
+        <div className="flex w-full max-w-sm flex-col items-center rounded-3xl border border-line bg-surface p-7 text-center shadow-xl">
+          <h2 id="sair-titulo" className="text-2xl font-extrabold tracking-tight">
+            Sair da prova?
+          </h2>
+          <p id="sair-texto" className="mt-2 text-muted">
+            {emBranco > 0
+              ? `${emBranco} ${emBranco === 1 ? 'questão está' : 'questões estão'} em branco.`
+              : 'Todas as questões estão respondidas.'}
+          </p>
+          <button
+            onClick={encerrar}
+            disabled={salvando}
+            className="foco mt-6 w-full rounded-2xl py-4 text-lg font-bold text-bg transition-opacity hover:opacity-90 disabled:opacity-60"
+            style={{ background: 'var(--d2)' }}
+          >
+            Encerrar a prova
+          </button>
+          <p className="mt-1.5 text-xs text-muted">Mostra o resultado agora. Questões em branco contam como erradas.</p>
+          <button
+            onClick={sairDepois}
+            disabled={salvando}
+            className="foco mt-4 w-full rounded-2xl border border-line py-3 font-bold transition-colors hover:bg-surface-2 disabled:opacity-60"
+          >
+            Sair e continuar depois
+          </button>
+          <p className="mt-1.5 text-xs text-muted">A prova é pausada e fica guardada neste navegador.</p>
+          <button
+            autoFocus
+            onClick={() => setSaindo(false)}
+            className="foco mt-4 rounded-full px-3 py-1 text-sm font-medium text-muted underline underline-offset-2 hover:text-ink"
+          >
+            Voltar à prova
+          </button>
         </div>
       </div>
     )}
