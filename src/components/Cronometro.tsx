@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 type Props = {
   /** Instante em que o simulado começou (ms) */
   inicio: number
-  /** Simulado de prova: conta para trás até acabar este tempo */
+  /** Simulado de prova: conta para frente e para neste tempo (1h30) */
   limiteMs?: number
   /** Cor da borda e do número (a prova muda de cor perto do fim) */
   cor?: string
@@ -20,12 +20,11 @@ function relogio(total: number): string {
 }
 
 function segundos(inicio: number, limiteMs: number | undefined, parado?: number): number {
-  const decorrido = (parado ?? Date.now()) - inicio
-  if (limiteMs === undefined) return Math.max(0, Math.floor(decorrido / 1000))
-  return Math.max(0, Math.ceil((limiteMs - decorrido) / 1000))
+  const decorrido = Math.max(0, Math.floor(((parado ?? Date.now()) - inicio) / 1000))
+  return limiteMs === undefined ? decorrido : Math.min(decorrido, Math.floor(limiteMs / 1000))
 }
 
-/** Cronômetro do simulado: conta o tempo desde o início (ou o que falta, na prova) */
+/** Cronômetro do simulado: conta o tempo desde o início (na prova, até o limite) */
 export default function Cronometro({ inicio, limiteMs, cor, parado }: Props) {
   const [vivo, setVivo] = useState(() => segundos(inicio, limiteMs, parado))
   // Confere 4x por segundo para a troca cair junto com a virada do segundo; só redesenha quando o número muda
@@ -40,7 +39,7 @@ export default function Cronometro({ inicio, limiteMs, cor, parado }: Props) {
   return (
     <span
       role="timer"
-      aria-label={`${limiteMs === undefined ? 'Tempo decorrido' : 'Tempo restante'} ${texto}`}
+      aria-label={`Tempo decorrido ${texto}${limiteMs === undefined ? '' : ` de ${relogio(Math.floor(limiteMs / 1000))}`}`}
       className="inline-flex shrink-0 items-center gap-1.5 rounded-full border-2 border-line px-3 py-1 text-sm font-extrabold tabular-nums"
       style={cor ? { borderColor: cor, color: cor } : undefined}
     >

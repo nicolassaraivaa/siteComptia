@@ -35,6 +35,9 @@ type Props = {
   onSair: () => void
 }
 
+/** Nos últimos 20 minutos da prova o relógio fica vermelho */
+const RETA_FINAL_MS = 20 * 60_000
+
 /** Marca usada nas simulações (sem alternativas) quando você diz que já resolveu */
 const RESOLVIDA = 'resolvida'
 
@@ -251,10 +254,10 @@ export default function Simulado({
   // A barra acompanha a posição, como o "11/13" ao lado; as em branco são avisadas ao finalizar
   const pct = Math.round(((idx + 1) / itens.length) * 100)
   const multiplaIncompleta = q.tipo === 'multipla' && atuais.length > 0 && atuais.length < q.escolha
-  const corTimer =
-    restanteMs === null ? '' : restanteMs <= 60_000 ? 'var(--d2)' : restanteMs <= 10 * 60_000 ? 'var(--d4)' : 'var(--ink)'
+  // O relógio da prova sobe até 1h30 e fica vermelho nos últimos 20 minutos
+  const corTimer = restanteMs === null ? '' : restanteMs <= RETA_FINAL_MS ? 'var(--d2)' : 'var(--ink)'
   const faixaTimer =
-    restanteMs === null ? null : restanteMs <= 60_000 ? 'Falta menos de 1 minuto.' : restanteMs <= 10 * 60_000 ? 'Faltam 10 minutos ou menos.' : null
+    restanteMs === null ? null : restanteMs <= 60_000 ? 'Falta menos de 1 minuto.' : restanteMs <= RETA_FINAL_MS ? 'Faltam 20 minutos ou menos.' : null
 
   return (
     <>
