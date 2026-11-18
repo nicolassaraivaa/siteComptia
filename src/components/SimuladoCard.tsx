@@ -2,18 +2,28 @@ import { useState } from 'react'
 import type { EstadoCiclo } from '../lib/questoes'
 import Painel, { IconeSimulado } from './Painel'
 
+/** Prova guardada no navegador que ainda não foi finalizada */
+export type ProvaEmAndamento = {
+  questao: number
+  total: number
+  /** Só quando pausada: o tempo está parado neste valor */
+  restanteMs?: number
+}
+
 type Props = {
   total: number
   estado: EstadoCiclo | null
   /** Mensagem quando as questões não puderam ser carregadas */
   indisponivel: string | null
   onComecar: (quantidade: number) => void
+  /** Prova em andamento: o botão do simulado de prova retoma em vez de começar outra */
   onComecarProva: () => void
+  provaEmAndamento?: ProvaEmAndamento | null
 }
 
 const ATALHOS = [10, 20, 30, 60, 90]
 
-export default function SimuladoCard({ total, estado, indisponivel, onComecar, onComecarProva }: Props) {
+export default function SimuladoCard({ total, estado, indisponivel, onComecar, onComecarProva, provaEmAndamento }: Props) {
   const [quantidade, setQuantidade] = useState('20')
   const descricao = 'Questões no formato da prova, sem repetir. Você vê o resultado no fim, e as erradas viram flashcards.'
 
@@ -46,6 +56,21 @@ export default function SimuladoCard({ total, estado, indisponivel, onComecar, o
           >
             {n > 0 ? `Começar simulado de ${n}` : 'Escolha a quantidade'}
           </button>
+          {provaEmAndamento ? (
+            <button
+              type="button"
+              onClick={onComecarProva}
+              className="foco flex w-full flex-col items-center rounded-2xl border-2 border-ink bg-surface-2 py-3 transition-colors hover:bg-surface"
+            >
+              <span className="text-lg font-bold">Retomar simulado de prova</span>
+              <span className="text-xs text-muted tabular-nums">
+                {provaEmAndamento.restanteMs !== undefined ? 'Pausado · ' : ''}
+                questão {provaEmAndamento.questao} de {provaEmAndamento.total}
+                {provaEmAndamento.restanteMs !== undefined &&
+                  ` · faltam ${Math.ceil(provaEmAndamento.restanteMs / 60_000)} min`}
+              </span>
+            </button>
+          ) : (
           <button
             type="button"
             onClick={() => {
@@ -57,6 +82,7 @@ export default function SimuladoCard({ total, estado, indisponivel, onComecar, o
             <span className="text-lg font-bold">Simulado de prova</span>
             <span className="text-xs text-muted">90 questões · 1h30 · como a prova real</span>
           </button>
+          )}
         </div>
       }
     >

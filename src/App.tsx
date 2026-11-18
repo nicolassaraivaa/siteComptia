@@ -11,7 +11,7 @@ import NovaSenha from './components/NovaSenha'
 import Revisao from './components/Revisao'
 import HistoricoProvas from './components/HistoricoProvas'
 import Simulado, { type EstadoSalvo, type InfoFinal } from './components/Simulado'
-import SimuladoCard from './components/SimuladoCard'
+import SimuladoCard, { type ProvaEmAndamento } from './components/SimuladoCard'
 import SimuladoResultado from './components/SimuladoResultado'
 import { CARDS } from './lib/cards'
 import { diaSP, montarBaralho, type Filtro } from './lib/fila'
@@ -65,6 +65,21 @@ function lerProvaGuardada(userId: string): ProvaGuardada | null {
     return bruto ? (JSON.parse(bruto) as ProvaGuardada) : null
   } catch {
     return null
+  }
+}
+
+function provaPausada(p: ProvaGuardada): boolean {
+  return p.estado.pausa?.desde != null
+}
+
+/** O que a tela inicial mostra de uma prova guardada: onde parou e, se pausada, quanto tempo sobra */
+function resumoProva(p: ProvaGuardada): ProvaEmAndamento {
+  const pausa = p.estado.pausa
+  return {
+    questao: p.estado.idx + 1,
+    total: p.itens.length,
+    restanteMs:
+      pausa?.desde != null ? Math.max(0, p.iniciadaEm + pausa.totalMs + PROVA_DURACAO_MS - pausa.desde) : undefined,
   }
 }
 
@@ -288,8 +303,32 @@ export default function App() {
     window.scrollTo({ top: 0 })
   }
 
+  /** Abre a prova guardada no navegador de onde parou (pausada, se estava pausada) */
+  const retomarProva = useCallback(
+    (g: ProvaGuardada): boolean => {
+      if (!questoes || !userId) return false
+      const porNumero = new Map(questoes.map((q) => [q.numero, q]))
+      const itens = g.itens.flatMap((x) => {
+        const questao = porNumero.get(x.numero)
+        return questao ? [{ questao, ciclo: x.ciclo }] : []
+      })
+      if (itens.length === 0) {
+        guardarProva(userId, null)
+        return false
+      }
+      setSimulado({ id: g.id, itens, iniciadoEm: g.iniciadaEm, prova: { iniciadaEm: g.iniciadaEm }, inicial: g.estado, respostas: [] })
+      setTela('simulado')
+      window.scrollTo({ top: 0 })
+      return true
+    },
+    [questoes, userId],
+  )
+
   function comecarProva() {
     if (!questoes || !ciclo || !userId) return
+    // Nunca sobrescreve uma prova em andamento: o botão retoma a que está guardada
+    const guardada = lerProvaGuardada(userId)
+    if (guardada && retomarProva(guardada)) return
     const itens = sortearProva(questoes, ciclo)
     const id = crypto.randomUUID()
     const iniciadaEm = Date.now()
@@ -304,21 +343,14 @@ export default function App() {
     window.scrollTo({ top: 0 })
   }
 
-  // Prova interrompida (página recarregada): retoma de onde parou, com o tempo que sobrou
+  // Prova interrompida com o tempo correndo (aba fechada, página recarregada): volta direto para ela.
+  // Pausada, ela espera: o botão do simulado de prova na tela inicial vira "Retomar".
   useEffect(() => {
     if (!questoes || !userId || retomouProva.current) return
     retomouProva.current = true
     const g = lerProvaGuardada(userId)
-    if (!g) return
-    const porNumero = new Map(questoes.map((q) => [q.numero, q]))
-    const itens = g.itens.flatMap((x) => {
-      const questao = porNumero.get(x.numero)
-      return questao ? [{ questao, ciclo: x.ciclo }] : []
-    })
-    if (itens.length === 0) return guardarProva(userId, null)
-    setSimulado({ id: g.id, itens, iniciadoEm: g.iniciadaEm, prova: { iniciadaEm: g.iniciadaEm }, inicial: g.estado, respostas: [] })
-    setTela('simulado')
-  }, [questoes, userId])
+    if (g && !provaPausada(g)) retomarProva(g)
+  }, [questoes, userId, retomarProva])
 
   // Revisão de flashcards interrompida: volta para ela, no mesmo card.
   // Espera as questões (ou o erro delas) porque as questões erradas também são cards.
@@ -326,7 +358,8 @@ export default function App() {
     if (!userId || revisaoDecidida || !progresso || perfil === undefined) return
     if (!questoes && !erroQuestoes) return
     setRevisaoDecidida(true)
-    if (lerProvaGuardada(userId)) return // a prova em andamento tem prioridade
+    const prova = lerProvaGuardada(userId)
+    if (prova && !provaPausada(prova)) return // a prova com o tempo correndo tem prioridade
     const g = lerRevisaoGuardada(userId)
     if (!g) return
     setFiltro(g.filtro)
@@ -548,6 +581,9 @@ export default function App() {
     )
   }
 
+  // Prova pausada e deixada para depois: o card do simulado oferece retomar em vez de começar outra
+  const provaSalva = lerProvaGuardada(userId)
+
   return (
     <Home
       email={session.user.email ?? ''}
@@ -565,6 +601,7 @@ export default function App() {
           indisponivel={erroQuestoes}
           onComecar={comecarSimulado}
           onComecarProva={comecarProva}
+          provaEmAndamento={provaSalva && resumoProva(provaSalva)}
         />
       }
       historico={provas && provas.length > 0 ? <HistoricoProvas provas={provas} respostas={respostas} /> : null}

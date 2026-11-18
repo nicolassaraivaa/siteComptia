@@ -427,6 +427,15 @@ export default function Simulado({
           >
             Continuar
           </button>
+          <button
+            onClick={onSair}
+            className="foco mt-2 w-full rounded-2xl border border-line py-3 font-bold transition-colors hover:bg-surface-2"
+          >
+            Sair e continuar depois
+          </button>
+          <p className="mt-3 text-xs text-muted">
+            A prova fica guardada neste navegador, pausada. Para voltar, toque em "Retomar simulado de prova" na tela inicial.
+          </p>
         </div>
       </div>
     )}
