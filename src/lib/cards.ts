@@ -16,6 +16,8 @@ export type CardData = {
   tags: string[]
   /** Presente nos cards gerados a partir de questões erradas no simulado */
   questao?: Questao
+  /** Dia (YYYY-MM-DD) do erro mais recente no simulado, nos cards de questões */
+  ultimo_erro?: string
 }
 
 /** Cards escritos à mão (cards.json). O baralho completo inclui também as questões erradas no simulado. */

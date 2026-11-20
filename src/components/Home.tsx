@@ -196,7 +196,7 @@ export default function Home({
             {baralho.cards.length > 0 && (
               <div className="mt-5">
                 <label htmlFor="filtro-dominio" className="text-sm font-medium">
-                  Domínio
+                  Revisar
                 </label>
                 <select
                   id="filtro-dominio"
@@ -204,6 +204,7 @@ export default function Home({
                   onChange={(e) => onFiltro(e.target.value as Filtro)}
                   className="foco mt-1.5 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-ink"
                 >
+                  <option value="recentes">Erros de 06/11 em diante</option>
                   <option value="todos">Todos os domínios</option>
                   {LISTA_DOMINIOS.map((d) => (
                     <option key={d} value={d}>

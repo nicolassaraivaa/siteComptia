@@ -98,7 +98,8 @@ export default function App() {
   const [progresso, setProgresso] = useState<ProgressoMap | null>(null)
   const [erroCarga, setErroCarga] = useState<string | null>(null)
   const [tela, setTela] = useState<Tela>('home')
-  const [filtro, setFiltro] = useState<Filtro>('todos')
+  // Começa nos erros das últimas 2 semanas; dá para trocar na tela inicial
+  const [filtro, setFiltro] = useState<Filtro>('recentes')
   const [dias, setDias] = useState<Set<string>>(new Set())
   const diasSalvos = useRef<Set<string>>(new Set()) // dias já gravados na tabela atividade
   const diasRef = useRef(dias) // para saber, ao salvar, se é a primeira revisão do dia
@@ -158,7 +159,7 @@ export default function App() {
     setDias(new Set())
     diasSalvos.current = new Set()
     setTela('home')
-    setFiltro('todos')
+    setFiltro('recentes')
   }, [])
 
   const carregar = useCallback(() => {

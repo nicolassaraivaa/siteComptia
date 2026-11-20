@@ -7,10 +7,29 @@ import type { ProgressoMap } from './progresso'
 
 export { diaSP }
 
-export type Filtro = Dominio | 'todos'
+/** "recentes" = só o que você errou de ERROS_DESDE em diante */
+export type Filtro = Dominio | 'todos' | 'recentes'
+
+/**
+ * Data de corte fixa (2 semanas antes de 20/11/2026): os erros antigos, já bem revisados, saem da
+ * revisão; os desta data em diante, e todos os que vierem depois, continuam.
+ */
+export const ERROS_DESDE = '2026-11-06'
+
+/**
+ * Card errado de ERROS_DESDE em diante: questão errada no simulado nesse período (vale o erro mais
+ * recente, inclusive na 2ª volta) ou anotação de erro criada nesse período. A carga de anotações
+ * antigas (backlog) não entra.
+ */
+export function erradoRecente(card: CardData): boolean {
+  if (card.origem === 'backlog') return false
+  return (card.ultimo_erro ?? card.adicionado_em) >= ERROS_DESDE
+}
 
 export function passaFiltro(card: CardData, filtro: Filtro): boolean {
-  return filtro === 'todos' || card.dominio === filtro
+  if (filtro === 'todos') return true
+  if (filtro === 'recentes') return erradoRecente(card)
+  return card.dominio === filtro
 }
 
 export type Baralho = { cards: CardData[]; porId: Map<string, CardData> }

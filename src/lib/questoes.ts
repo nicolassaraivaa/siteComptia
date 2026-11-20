@@ -166,8 +166,12 @@ export const prefixoCardQuestao = 'q-'
 /** Questões erradas viram flashcards: frente = enunciado, verso = gabarito + explicação */
 export function cardsDeQuestoes(questoes: Questao[], respostas: Resposta[]): CardData[] {
   const primeiroErro = new Map<number, string>()
+  const ultimoErro = new Map<number, string>()
   for (const r of respostas) {
-    if (errou(r.resultado) && !primeiroErro.has(r.questao)) primeiroErro.set(r.questao, diaSP(new Date(r.respondida_em)))
+    if (!errou(r.resultado)) continue
+    const dia = diaSP(new Date(r.respondida_em))
+    if (!primeiroErro.has(r.questao)) primeiroErro.set(r.questao, dia)
+    if (dia > (ultimoErro.get(r.questao) ?? '')) ultimoErro.set(r.questao, dia)
   }
   const porNumero = new Map(questoes.map((q) => [q.numero, q]))
   const cards: CardData[] = []
@@ -181,6 +185,7 @@ export function cardsDeQuestoes(questoes: Questao[], respostas: Resposta[]): Car
       dominio: q.dominio,
       origem: 'simulado',
       adicionado_em: dia,
+      ultimo_erro: ultimoErro.get(numero),
       tags: ['simulado-pdf'],
       questao: q,
     })
