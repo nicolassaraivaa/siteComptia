@@ -1,47 +1,55 @@
 import { useState } from 'react'
 import { diaSP } from '../lib/datas'
-import { salvarDataProva } from '../lib/perfil'
-import Castor from './Castor'
+import { salvarDataProva, salvarTreino } from '../lib/perfil'
+import Castor, { type Pose } from './Castor'
 
 type Props = {
   userId: string
   atual: string | null
+  /** Está no modo treinamento (sem data de prova) */
+  treino?: boolean
   /** Primeiro acesso: mostra boas-vindas e a opção de pular */
   primeiroAcesso: boolean
-  onSalvo: (dataProva: string | null) => void
+  /** Abertura no lugar do título padrão (ex.: depois de uma reprovação) */
+  intro?: { pose: Pose; titulo: string; texto: string }
+  /** treino = escolheu só treinar, sem data */
+  onSalvo: (dataProva: string | null, treino: boolean) => void
   onCancelar?: () => void
 }
 
 /** Pergunta a data da prova; ela define a contagem regressiva e o ritmo das revisões */
-export default function DataProva({ userId, atual, primeiroAcesso, onSalvo, onCancelar }: Props) {
-  const [data, setData] = useState(atual ?? '')
+export default function DataProva({ userId, atual, treino = false, primeiroAcesso, intro, onSalvo, onCancelar }: Props) {
+  // uma data que já passou (a prova feita) não volta preenchida
+  const [data, setData] = useState(() => (atual && atual >= diaSP(new Date()) ? atual : ''))
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const hoje = diaSP(new Date())
 
-  async function salvar(valor: string | null) {
+  async function salvar(valor: string | null, soTreinar = false) {
     setErro(null)
     if (valor && valor < hoje) return setErro('Escolha uma data a partir de hoje.')
     setSalvando(true)
     try {
-      await salvarDataProva(userId, valor)
+      if (soTreinar) await salvarTreino(userId)
+      else await salvarDataProva(userId, valor)
     } catch (e) {
       setErro(`Não foi possível salvar (${(e as Error).message}). Tente de novo.`)
       setSalvando(false)
       return
     }
-    onSalvo(valor)
+    onSalvo(soTreinar ? null : valor, soTreinar)
   }
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4 py-10">
-      {primeiroAcesso && <Castor pose="neutro" tamanho={120} className="-ml-3 mb-2" />}
-      <h1 className="text-3xl font-extrabold tracking-tight">
-        {primeiroAcesso ? 'Bem-vindo ao Sec+ SY0-701' : 'Data da prova'}
+      {(primeiroAcesso || intro) && <Castor pose={intro?.pose ?? 'neutro'} tamanho={120} className="-ml-3 mb-2" />}
+      <h1 className="text-3xl font-extrabold tracking-tight text-balance">
+        {intro?.titulo ?? (primeiroAcesso ? 'Bem-vindo ao Sec+ SY0-701' : 'Data da prova')}
       </h1>
-      <p className="mt-2 mb-8 text-muted">
+      {intro && <p className="mt-2 text-muted">{intro.texto}</p>}
+      <p className={`${intro ? 'mt-4' : 'mt-2'} mb-8 text-muted`}>
         Quando é a sua prova? A data define a contagem regressiva e o ritmo das revisões: perto da prova, todos os cards
-        voltam com mais frequência.
+        voltam com mais frequência. Se for só para treinar, dá para seguir sem data.
       </p>
 
       <form
@@ -78,15 +86,29 @@ export default function DataProva({ userId, atual, primeiroAcesso, onSalvo, onCa
         </button>
       </form>
 
+      <button
+        type="button"
+        onClick={() => void salvar(null, true)}
+        disabled={salvando}
+        aria-pressed={treino}
+        className={`foco mt-3 rounded-2xl border-2 py-3 font-bold transition-colors hover:bg-surface-2 disabled:opacity-50 ${
+          treino ? 'border-ink bg-surface-2' : 'border-line'
+        }`}
+      >
+        {treino ? '✓ Modo treinamento' : 'Só treinar, sem data de prova'}
+      </button>
+
       <div className="mt-4 flex flex-col items-center gap-2">
-        <button
-          type="button"
-          onClick={() => void salvar(null)}
-          disabled={salvando}
-          className="foco rounded px-2 py-1 text-sm text-muted underline underline-offset-2 hover:text-ink"
-        >
-          {primeiroAcesso || !atual ? 'Ainda não marquei a prova' : 'Remover a data'}
-        </button>
+        {!intro && (
+          <button
+            type="button"
+            onClick={() => void salvar(null)}
+            disabled={salvando}
+            className="foco rounded px-2 py-1 text-sm text-muted underline underline-offset-2 hover:text-ink"
+          >
+            {primeiroAcesso || (!atual && !treino) ? 'Ainda não marquei a prova' : 'Remover a data'}
+          </button>
+        )}
         {onCancelar && (
           <button
             type="button"

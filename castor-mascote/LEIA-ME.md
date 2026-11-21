@@ -8,6 +8,7 @@
 | `castor-acertou.svg` | Resposta certa (pula da nuvem, piscadinha, joinha, brilhos) |
 | `castor-errou.svg` | Resposta errada (coça a cabeça, gota de suor) |
 | `castor-streak.svg` | Meta/streak batida (pula, fogo, confete) |
+| `castor-aplaudindo.svg` | Aprovação na prova (bate palma, pula, confete) |
 | `castor-pensando.svg` | Loading / processando (balão com "...") |
 | `castor-logo.svg` | Logo em badge (header, redes, PWA) |
 | `castor-icone.svg` | Só a cabeça, fundo transparente (avatar, header) |

@@ -131,9 +131,12 @@ export type EstadoCiclo = {
   restantes: number[] // questões ainda não vistas neste ciclo
 }
 
-/** Questões só se repetem depois que todas foram vistas no ciclo atual */
-export function estadoCiclo(questoes: Questao[], respostas: Resposta[]): EstadoCiclo {
-  const ultimo = respostas.reduce((m, r) => Math.max(m, r.ciclo), 1)
+/**
+ * Questões só se repetem depois que todas foram vistas no ciclo atual.
+ * cicloInicio força uma volta nova (depois de zerar os flashcards), mesmo com a atual incompleta.
+ */
+export function estadoCiclo(questoes: Questao[], respostas: Resposta[], cicloInicio = 1): EstadoCiclo {
+  const ultimo = respostas.reduce((m, r) => Math.max(m, r.ciclo), Math.max(1, cicloInicio))
   const vistasUltimo = new Set(respostas.filter((r) => r.ciclo === ultimo).map((r) => r.questao))
   const completo = questoes.length > 0 && questoes.every((q) => vistasUltimo.has(q.numero))
   const ciclo = completo ? ultimo + 1 : ultimo
@@ -163,12 +166,17 @@ export function textoResposta(q: Questao): string {
 
 export const prefixoCardQuestao = 'q-'
 
-/** Questões erradas viram flashcards: frente = enunciado, verso = gabarito + explicação */
-export function cardsDeQuestoes(questoes: Questao[], respostas: Resposta[]): CardData[] {
+/**
+ * Questões erradas viram flashcards: frente = enunciado, verso = gabarito + explicação.
+ * Com zeradosEm (ISO), só contam os erros depois que a pessoa apagou os flashcards.
+ */
+export function cardsDeQuestoes(questoes: Questao[], respostas: Resposta[], zeradosEm: string | null = null): CardData[] {
+  const corte = zeradosEm ? Date.parse(zeradosEm) : null
   const primeiroErro = new Map<number, string>()
   const ultimoErro = new Map<number, string>()
   for (const r of respostas) {
     if (!errou(r.resultado)) continue
+    if (corte !== null && Date.parse(r.respondida_em) <= corte) continue
     const dia = diaSP(new Date(r.respondida_em))
     if (!primeiroErro.has(r.questao)) primeiroErro.set(r.questao, dia)
     if (dia > (ultimoErro.get(r.questao) ?? '')) ultimoErro.set(r.questao, dia)

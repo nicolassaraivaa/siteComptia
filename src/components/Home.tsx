@@ -15,6 +15,13 @@ type Props = {
   email: string
   baralho: Baralho
   dataProva: string | null
+  /** Estudando só para treinar, sem data de prova */
+  treino?: boolean
+  /** Aprovada na prova marcada */
+  aprovado?: boolean
+  /** Chegou o dia da prova e a pessoa ainda não disse como foi */
+  perguntarResultado?: boolean
+  onResultado?: (aprovado: boolean) => void
   onAlterarDataProva: () => void
   onHistorico: () => void
   simulado: ReactNode
@@ -49,6 +56,10 @@ export default function Home({
   email,
   baralho,
   dataProva,
+  treino = false,
+  aprovado = false,
+  perguntarResultado = false,
+  onResultado,
   onAlterarDataProva,
   onHistorico,
   simulado,
@@ -142,7 +153,9 @@ export default function Home({
         className="flex flex-col gap-4 border-b border-line pb-6 md:flex-row md:items-end md:justify-between"
       >
         <div>
-          {diasProva !== null && diasProva > 0 ? (
+          {aprovado ? (
+            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Aprovado na Security+</h1>
+          ) : diasProva !== null && diasProva > 0 ? (
             <h1 className="text-3xl font-extrabold tracking-tight text-balance sm:text-4xl">
               Faltam {plural(diasProva, 'dia', 'dias')} para a prova
             </h1>
@@ -152,14 +165,48 @@ export default function Home({
             </h1>
           )}
           <p className="mt-1 text-muted">
-            {dataProva ? `Prova em ${formatarDataProva(dataProva)}.` : 'Você ainda não marcou a data da prova.'}{' '}
+            {treino
+              ? 'Modo treinamento, sem data de prova.'
+              : dataProva
+                ? `${aprovado || (diasProva !== null && diasProva < 0) ? 'Prova feita em' : 'Prova em'} ${formatarDataProva(dataProva)}.`
+                : 'Você ainda não marcou a data da prova.'}{' '}
             <button onClick={onAlterarDataProva} className="foco rounded font-medium text-ink underline underline-offset-2">
-              {dataProva ? 'Alterar data' : 'Marcar data'}
+              {dataProva && !aprovado ? 'Alterar data' : 'Marcar data'}
             </button>
           </p>
         </div>
         <OfensivaCard ofensiva={ofensiva} />
       </section>
+
+      {perguntarResultado && onResultado && (
+        <section
+          aria-labelledby="resultado-titulo"
+          className="mt-8 flex flex-col gap-4 rounded-3xl border-2 border-ink bg-surface p-5 sm:flex-row sm:items-center sm:p-6"
+        >
+          <Castor pose="pensando" tamanho={88} className="-my-2 shrink-0 self-center" />
+          <div className="min-w-0 flex-1">
+            <h2 id="resultado-titulo" className="text-xl font-extrabold">
+              Como foi a prova?
+            </h2>
+            <p className="mt-1 text-sm text-muted">Conte para o Nickols o resultado.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:w-72">
+            <button
+              onClick={() => onResultado(true)}
+              className="foco rounded-2xl py-3 font-bold text-bg transition-opacity hover:opacity-90"
+              style={{ background: 'var(--good)' }}
+            >
+              Aprovado
+            </button>
+            <button
+              onClick={() => onResultado(false)}
+              className="foco rounded-2xl border-2 border-line py-3 font-bold transition-colors hover:bg-surface-2"
+            >
+              Reprovado
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Para hoje: as duas atividades principais, lado a lado */}
       <section aria-labelledby="hoje-titulo" className="mt-8">

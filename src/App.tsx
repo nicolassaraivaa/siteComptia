@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Card, Grade } from 'ts-fsrs'
+import Aprovado from './components/Aprovado'
 import Comemoracao from './components/Comemoracao'
 import DataProva from './components/DataProva'
 import Fim from './components/Fim'
@@ -8,6 +9,7 @@ import Historico from './components/Historico'
 import Home from './components/Home'
 import Login from './components/Login'
 import NovaSenha from './components/NovaSenha'
+import ObjetivoSimulado from './components/ObjetivoSimulado'
 import Revisao from './components/Revisao'
 import HistoricoProvas from './components/HistoricoProvas'
 import Simulado, { type EstadoSalvo, type InfoFinal } from './components/Simulado'
@@ -18,9 +20,16 @@ import { diaSP, montarBaralho, type Filtro } from './lib/fila'
 import type { Stats } from './lib/fsrs'
 import { carregarCardsPorDia, type CardsPorDia } from './lib/historico'
 import { calcularOfensiva, carregarDias, diasDasRespostas, diasDoProgresso, registrarDia } from './lib/ofensiva'
-import { carregarPerfil, type Perfil } from './lib/perfil'
+import {
+  aguardandoResultado,
+  aprovadoSemObjetivo,
+  carregarPerfil,
+  PERFIL_VAZIO,
+  salvarResultado,
+  type Perfil,
+} from './lib/perfil'
 import { carregarProgresso, type ProgressoMap } from './lib/progresso'
-import { lerRevisaoGuardada } from './lib/sessaoRevisao'
+import { guardarRevisao, lerRevisaoGuardada } from './lib/sessaoRevisao'
 import {
   cardsDeQuestoes,
   carregarProvas,
@@ -40,7 +49,17 @@ import {
 } from './lib/questoes'
 import { supabase } from './lib/supabase'
 
-type Tela = 'home' | 'revisao' | 'fim' | 'simulado' | 'resultado' | 'data-prova' | 'historico' | 'historico-simulado'
+type Tela =
+  | 'home'
+  | 'revisao'
+  | 'fim'
+  | 'simulado'
+  | 'resultado'
+  | 'data-prova'
+  | 'historico'
+  | 'historico-simulado'
+  | 'aprovado'
+  | 'reprovado'
 
 type SimuladoAtivo = {
   id: string
@@ -174,7 +193,7 @@ export default function App() {
         if (!atual()) return
         // sem a tabela perfil o app segue funcionando, só sem cards pessoais e sem data da prova
         console.warn('Perfil indisponível:', e.message)
-        setPerfil({ data_prova: null, cards_pessoais: false })
+        setPerfil(PERFIL_VAZIO)
       })
     const diasP = carregarDias().catch((e: Error) => {
       console.warn('Ofensiva indisponível:', e.message)
@@ -272,17 +291,22 @@ export default function App() {
 
   const ofensiva = useMemo(() => calcularOfensiva(dias, diaSP(new Date())), [dias])
 
+  const zeradosDia = perfil?.flashcards_zerados_em ? diaSP(new Date(perfil.flashcards_zerados_em)) : null
   // Baralho = cards escritos à mão + questões erradas no simulado
   const baralho = useMemo(
     () =>
       montarBaralho([
-        // cards escritos à mão só aparecem na conta do dono (perfil.cards_pessoais)
-        ...(perfil?.cards_pessoais ? CARDS : []),
-        ...(questoes ? cardsDeQuestoes(questoes, respostas) : []),
+        // cards escritos à mão só aparecem na conta do dono (perfil.cards_pessoais);
+        // depois de zerar os flashcards, só os criados a partir daquele dia
+        ...(perfil?.cards_pessoais ? CARDS.filter((c) => !zeradosDia || c.adicionado_em > zeradosDia) : []),
+        ...(questoes ? cardsDeQuestoes(questoes, respostas, perfil?.flashcards_zerados_em ?? null) : []),
       ]),
-    [perfil, questoes, respostas],
+    [perfil, zeradosDia, questoes, respostas],
   )
-  const ciclo = useMemo(() => (questoes ? estadoCiclo(questoes, respostas) : null), [questoes, respostas])
+  const ciclo = useMemo(
+    () => (questoes ? estadoCiclo(questoes, respostas, perfil?.ciclo_inicio ?? 1) : null),
+    [questoes, respostas, perfil],
+  )
 
   const mesclarRespostas = useCallback(
     (novas: Resposta[]) => {
@@ -295,8 +319,27 @@ export default function App() {
   )
   const onRespondida = useCallback((r: Resposta) => mesclarRespostas([r]), [mesclarRespostas])
 
-  function comecarSimulado(quantidade: number) {
+  // Aprovada e começando um simulado novo: antes pergunta se vai refazer a prova ou só treinar
+  const [objetivo, setObjetivo] = useState<(() => void) | null>(null)
+
+  async function informarResultado(aprovado: boolean) {
+    if (!userId || !perfil?.data_prova) return
+    const resultado = aprovado ? 'aprovado' : 'reprovado'
+    try {
+      await salvarResultado(userId, resultado, perfil.data_prova)
+    } catch (e) {
+      window.alert(`Não foi possível salvar o resultado (${(e as Error).message}). Tente de novo.`)
+      return
+    }
+    setPerfil({ ...perfil, resultado, resultado_data: perfil.data_prova })
+    setTela(aprovado ? 'aprovado' : 'reprovado')
+    window.scrollTo({ top: 0 })
+  }
+
+  /** jaPerguntou: a pessoa acabou de escolher o objetivo, não pergunta de novo */
+  function comecarSimulado(quantidade: number, jaPerguntou = false) {
     if (!questoes || !ciclo) return
+    if (!jaPerguntou && aprovadoSemObjetivo(perfil)) return setObjetivo(() => () => comecarSimulado(quantidade, true))
     const porNumero = new Map(questoes.map((q) => [q.numero, q]))
     const itens = sortear(ciclo.restantes, quantidade).map((n) => ({ questao: porNumero.get(n)!, ciclo: ciclo.ciclo }))
     setSimulado({ id: crypto.randomUUID(), itens, iniciadoEm: Date.now(), respostas: [] })
@@ -325,11 +368,12 @@ export default function App() {
     [questoes, userId],
   )
 
-  function comecarProva() {
+  function comecarProva(jaPerguntou = false) {
     if (!questoes || !ciclo || !userId) return
     // Nunca sobrescreve uma prova em andamento: o botão retoma a que está guardada
     const guardada = lerProvaGuardada(userId)
     if (guardada && retomarProva(guardada)) return
+    if (!jaPerguntou && aprovadoSemObjetivo(perfil)) return setObjetivo(() => () => comecarProva(true))
     const itens = sortearProva(questoes, ciclo)
     const id = crypto.randomUUID()
     const iniciadaEm = Date.now()
@@ -435,18 +479,43 @@ export default function App() {
 
   const dataProva = perfil?.data_prova ?? null
 
-  if (perfil === null || tela === 'data-prova') {
+  if (perfil === null || tela === 'data-prova' || tela === 'reprovado') {
     const primeiroAcesso = perfil === null
     return (
       <DataProva
         userId={userId}
         atual={dataProva}
+        treino={perfil?.treino}
         primeiroAcesso={primeiroAcesso}
-        onSalvo={(data) => {
-          setPerfil({ data_prova: data, cards_pessoais: perfil?.cards_pessoais ?? false })
+        intro={
+          tela === 'reprovado'
+            ? {
+                pose: 'neutro',
+                titulo: 'Faz parte. Bora para a próxima!',
+                texto: 'Seus flashcards e o histórico do simulado continuam aqui. Quando é a nova prova?',
+              }
+            : undefined
+        }
+        onSalvo={(data, treino) => {
+          setPerfil({ ...(perfil ?? PERFIL_VAZIO), data_prova: data, treino })
           setTela('home')
         }}
         onCancelar={primeiroAcesso ? undefined : () => setTela('home')}
+      />
+    )
+  }
+
+  if (tela === 'aprovado') {
+    return (
+      <Aprovado
+        totalFlashcards={progresso.size}
+        onContinuar={() => setTela('home')}
+        onZerado={() => {
+          // a revisão guardada aponta para cards que não existem mais
+          guardarRevisao(userId, null)
+          setTela('home')
+          carregar()
+        }}
       />
     )
   }
@@ -586,10 +655,15 @@ export default function App() {
   const provaSalva = lerProvaGuardada(userId)
 
   return (
+    <>
     <Home
       email={session.user.email ?? ''}
       baralho={baralho}
       dataProva={dataProva}
+      treino={perfil.treino}
+      aprovado={perfil.resultado === 'aprovado' && perfil.resultado_data === dataProva}
+      perguntarResultado={aguardandoResultado(perfil, diaSP(new Date()))}
+      onResultado={(aprovado) => void informarResultado(aprovado)}
       onAlterarDataProva={() => setTela('data-prova')}
       onHistorico={() => {
         setTela('historico')
@@ -600,8 +674,8 @@ export default function App() {
           total={questoes?.length ?? 0}
           estado={ciclo}
           indisponivel={erroQuestoes}
-          onComecar={comecarSimulado}
-          onComecarProva={comecarProva}
+          onComecar={(n) => comecarSimulado(n)}
+          onComecarProva={() => comecarProva()}
           provaEmAndamento={provaSalva && resumoProva(provaSalva)}
         />
       }
@@ -612,6 +686,23 @@ export default function App() {
       onFiltro={setFiltro}
       onComecar={() => setTela('revisao')}
     />
+    {objetivo && (
+      <ObjetivoSimulado
+        userId={userId}
+        onRefazer={() => {
+          setObjetivo(null)
+          setTela('data-prova')
+        }}
+        onTreino={() => {
+          const seguir = objetivo
+          setObjetivo(null)
+          setPerfil({ ...perfil, data_prova: null, treino: true })
+          seguir()
+        }}
+        onCancelar={() => setObjetivo(null)}
+      />
+    )}
+    </>
   )
 }
 

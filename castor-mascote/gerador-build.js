@@ -370,6 +370,32 @@ ${CONF.map(([x, y, c, d], i) => `<g class="${p}-cf" style="animation-delay:${d}s
 .${p}-cf{animation:${p}-fall 2.2s linear infinite;transform-box:fill-box;transform-origin:center}
 @keyframes ${p}-fall{0%{transform:translateY(-90px) rotate(0);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateY(160px) rotate(220deg);opacity:0}}`);
 
+// Aprovação na prova: bate palma na frente do peito, pulando, com confete
+poses.aplaudindo = (p = 'cap') => svg(p, `<title>Castor — aplaudindo</title>
+${char(p, `
+  ${head(p, { glasses: 'up', eyes: 'happy', brows: 'upHigh', mouth: 'open' })}
+  ${pocket(p)}
+  <g class="${p}-armL">${arm('M 112 226 C 116 252 146 250 166 236', paw(170, 233, 15, 70))}</g>
+  <g class="${p}-armR">${arm('M 248 226 C 244 252 214 250 194 236', paw(190, 233, 15, -70))}</g>
+  <g class="${p}-clap" fill="none" stroke="${C.ol}" stroke-width="3.6" stroke-linecap="round">
+    <path d="M 180 217 L 180 207"/><path d="M 161 219 L 152 211"/><path d="M 199 219 L 208 211"/>
+  </g>`)}
+${CONF.map(([x, y, c, d], i) => `<g class="${p}-cf" style="animation-delay:${d}s"><rect x="${x}" y="${y}" width="${i % 2 ? 7 : 10}" height="${i % 2 ? 12 : 6}" rx="1.5" fill="${c}" stroke="${C.ol}" stroke-width="2" transform="rotate(${i * 37} ${x} ${y})"/></g>`).join('')}
+${sparkle(56, 100, 1.2, '#FFD34D', `${p}-sp`)}
+${sparkle(308, 96, 1.0, C.cyan, `${p}-sp ${p}-sp2`)}`,
+`.${p}-char{animation:${p}-jump 1s cubic-bezier(.3,.7,.4,1) infinite;${HOP_ORIGIN}}
+@keyframes ${p}-jump{0%,100%{transform:translateY(0)}45%{transform:translateY(-10px)}}
+.${p}-armL{animation:${p}-clapL .5s ease-in-out infinite}
+.${p}-armR{animation:${p}-clapR .5s ease-in-out infinite}
+@keyframes ${p}-clapL{0%,100%{transform:translateX(-13px)}45%,55%{transform:translateX(0)}}
+@keyframes ${p}-clapR{0%,100%{transform:translateX(13px)}45%,55%{transform:translateX(0)}}
+.${p}-clap{animation:${p}-burst .5s ease-out infinite;transform-box:view-box;transform-origin:180px 226px}
+@keyframes ${p}-burst{0%,40%{opacity:0;transform:scale(.6)}55%{opacity:1;transform:scale(1)}80%,100%{opacity:0;transform:scale(1.15)}}
+.${p}-cf{animation:${p}-fall 2.2s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes ${p}-fall{0%{transform:translateY(-90px) rotate(0);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateY(160px) rotate(220deg);opacity:0}}
+.${p}-sp{animation:${p}-tw 1s ease-in-out infinite;transform-box:view-box}.${p}-sp2{animation-delay:.5s}
+@keyframes ${p}-tw{0%,100%{transform:scale(.4) rotate(0);opacity:.2}50%{transform:scale(1.1) rotate(45deg);opacity:1}}`);
+
 poses.pensando = (p = 'cp') => svg(p, `<title>Castor — pensando</title>
 ${char(p, `
   ${head(p, { glasses: 'up', eyes: 'lookup', brows: 'think', mouth: 'hmm' })}

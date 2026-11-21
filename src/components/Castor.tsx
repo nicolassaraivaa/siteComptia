@@ -6,10 +6,11 @@
  * - acertou: pula, piscadinha, joinha
  * - errou: coça a cabeça
  * - streak: comemora com fogo e confete
+ * - aplaudindo: bate palma com confete (aprovação na prova)
  * - pensando: carregando
  * - icone: só a cabeça (logo do cabeçalho)
  */
-export type Pose = 'neutro' | 'acertou' | 'errou' | 'streak' | 'pensando' | 'icone'
+export type Pose = 'neutro' | 'acertou' | 'errou' | 'streak' | 'aplaudindo' | 'pensando' | 'icone'
 
 type Props = {
   pose?: Pose
