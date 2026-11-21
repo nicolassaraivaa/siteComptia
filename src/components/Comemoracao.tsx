@@ -22,7 +22,7 @@ const FAGULHAS = [
   { fx: '105px', fy: '80px', atraso: 200 },
 ]
 
-/** Nickols comemora a ofensiva do dia: aparece na primeira revisão de cada dia e some sozinho */
+/** Toco comemora a ofensiva do dia: aparece na primeira revisão de cada dia e some sozinho */
 export default function Comemoracao({ dias, recorde, onFechar }: Props) {
   const botao = useRef<HTMLButtonElement>(null)
 
@@ -38,7 +38,7 @@ export default function Comemoracao({ dias, recorde, onFechar }: Props) {
   }, [onFechar])
 
   const titulo = dias === 1 ? 'Ofensiva começou!' : `${dias} dias seguidos!`
-  const subtitulo = recorde && dias > 1 ? 'Novo recorde. O Nickols está orgulhoso!' : dias === 1 ? 'O Nickols te espera amanhã para manter o fogo aceso.' : 'Ofensiva mantida. O Nickols está comemorando com você!'
+  const subtitulo = recorde && dias > 1 ? 'Novo recorde. O Toco está orgulhoso!' : dias === 1 ? 'O Toco te espera amanhã para manter o fogo aceso.' : 'Ofensiva mantida. O Toco está comemorando com você!'
 
   return (
     <div
@@ -67,7 +67,7 @@ export default function Comemoracao({ dias, recorde, onFechar }: Props) {
             </span>
           ))}
           <div aria-hidden="true" className="fogo-atras absolute -inset-[18%] -top-[34%]" />
-          <Castor pose="streak" tamanho={210} rotulo="Nickols, o castor, comemorando" className="relative z-10" />
+          <Castor pose="streak" tamanho={210} rotulo="Toco, o castor, comemorando" className="relative z-10" />
         </div>
         <p id="comemoracao-titulo" className="mt-4 text-4xl font-extrabold tracking-tight tabular-nums">
           {titulo}

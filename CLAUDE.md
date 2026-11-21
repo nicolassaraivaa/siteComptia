@@ -1,4 +1,4 @@
-# Nickols Certificações — instruções
+# Toco Certificações — instruções
 
 App de flashcards e simulados para várias certificações (começou com a Security+ SY0-701). Cada certificação é descrita em `src/certificacoes.ts` (domínios, pesos, formato da prova, badge, validade). Progresso no Supabase, separado por certificação (coluna `certificacao`).
 

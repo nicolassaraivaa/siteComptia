@@ -174,10 +174,10 @@ function reduzMovimento(): boolean {
 }
 
 /**
- * Nickols atravessa a tela surfando na nuvem, pousa no lugar dele (com impacto e espuma
+ * Toco atravessa a tela surfando na nuvem, pousa no lugar dele (com impacto e espuma
  * espirrando) e o fogo acende atrás. Um toque ou Espaço/Enter/Esc pula direto para o pouso.
  */
-export default function NickolsVoando({ tamanho = 190, onPouso }: Props) {
+export default function TocoVoando({ tamanho = 190, onPouso }: Props) {
   const castor = useRef<HTMLDivElement>(null)
   const rastro = useRef<HTMLDivElement>(null)
   const [pousou, setPousou] = useState(reduzMovimento)
@@ -312,13 +312,13 @@ export default function NickolsVoando({ tamanho = 190, onPouso }: Props) {
           <Castor
             pose="neutro"
             tamanho={tamanho}
-            rotulo={pousou ? undefined : 'Nickols, o castor, surfando na nuvem'}
+            rotulo={pousou ? undefined : 'Toco, o castor, surfando na nuvem'}
             className={`absolute inset-0 transition-opacity duration-150 ${pousou ? 'opacity-0' : ''}`}
           />
           <Castor
             pose="streak"
             tamanho={tamanho}
-            rotulo={pousou ? 'Nickols, o castor, comemorando na frente do fogo' : undefined}
+            rotulo={pousou ? 'Toco, o castor, comemorando na frente do fogo' : undefined}
             className={`absolute inset-0 transition-opacity duration-150 ${pousou ? '' : 'opacity-0'}`}
           />
         </div>

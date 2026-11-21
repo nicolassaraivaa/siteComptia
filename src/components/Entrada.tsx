@@ -57,7 +57,7 @@ export default function Entrada({ email, perfis, ultima, trilha, ofensiva, onEsc
       <header className="flex items-center justify-between gap-3 py-4">
         <p className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
           <Castor pose="icone" tamanho={40} />
-          Nickols Certificações
+          Toco Certificações
         </p>
         <MenuConta email={email} onMinhas={onMinhas} />
       </header>

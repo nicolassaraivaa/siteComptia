@@ -203,7 +203,7 @@ export default function Home({
             <h2 id="resultado-titulo" className="text-xl font-extrabold">
               Como foi a prova?
             </h2>
-            <p className="mt-1 text-sm text-muted">Conte para o Nickols o resultado.</p>
+            <p className="mt-1 text-sm text-muted">Conte para o Toco o resultado.</p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:w-72">
             <button

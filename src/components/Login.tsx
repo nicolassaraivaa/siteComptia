@@ -80,8 +80,8 @@ export default function Login() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4 py-10">
-      <Castor pose="neutro" tamanho={120} className="-ml-3 mb-2" rotulo="Nickols, o castor mascote" />
-      <h1 className="text-3xl font-extrabold tracking-tight">Nickols Certificações</h1>
+      <Castor pose="neutro" tamanho={120} className="-ml-3 mb-2" rotulo="Toco, o castor mascote" />
+      <h1 className="text-3xl font-extrabold tracking-tight">Toco Certificações</h1>
       <p className="mt-1 mb-8 text-muted">
         {criando
           ? 'Crie sua conta para salvar o progresso.'

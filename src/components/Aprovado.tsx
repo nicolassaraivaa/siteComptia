@@ -17,7 +17,7 @@ type Etapa = 'festa' | 'escolha' | 'confirmar' | 'apagando' | 'zerado'
 /** Tempo da comemoração antes de perguntar o que fazer com os flashcards */
 const FESTA_MS = 3500
 
-/** Aprovação na prova: o Nickols bate palma e depois pergunta se mantém ou apaga os flashcards */
+/** Aprovação na prova: o Toco bate palma e depois pergunta se mantém ou apaga os flashcards */
 export default function Aprovado({ totalFlashcards, onContinuar, onZerado }: Props) {
   const cert = useCert()
   const [etapa, setEtapa] = useState<Etapa>('festa')
@@ -55,14 +55,14 @@ export default function Aprovado({ totalFlashcards, onContinuar, onZerado }: Pro
       <Castor
         pose={etapa === 'zerado' ? 'neutro' : 'aplaudindo'}
         tamanho={festa ? 260 : 170}
-        rotulo={etapa === 'zerado' ? 'Nickols, o castor' : 'Nickols, o castor, batendo palmas'}
+        rotulo={etapa === 'zerado' ? 'Toco, o castor' : 'Toco, o castor, batendo palmas'}
         className="motion-safe:animate-castor-entrar transition-[width,height] duration-500"
       />
 
       {etapa !== 'zerado' && (
         <>
           <h1 className="mt-4 text-4xl font-extrabold tracking-tight">Aprovado!</h1>
-          <p className="mt-2 font-medium text-[var(--good)]">Parabéns pela {cert.nomeCurto}. O Nickols está aplaudindo de pé.</p>
+          <p className="mt-2 font-medium text-[var(--good)]">Parabéns pela {cert.nomeCurto}. O Toco está aplaudindo de pé.</p>
         </>
       )}
 

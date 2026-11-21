@@ -1,5 +1,5 @@
 /**
- * Nickols, o castor: mascote e logo do app.
+ * Toco, o castor: mascote e logo do app.
  * As poses vêm de castor-mascote/ (copiadas para public/mascote/). Cada SVG já traz a
  * própria animação em CSS e respeita "reduzir movimento" do sistema.
  * - neutro: em pé na nuvem, mãos no bolso

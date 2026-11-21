@@ -17,7 +17,7 @@ export default function ProntidaoCard({ prontidao }: { prontidao: Prontidao }) {
 
   const motivo =
     nivel === 'sem-dados'
-      ? `Faça um simulado de prova (${cert.prova.questoes} questões) para o Nickols estimar.`
+      ? `Faça um simulado de prova (${cert.prova.questoes} questões) para o Toco estimar.`
       : nivel === 'pronto'
         ? `Média acima da zona segura e ${cobertura}% do banco visto.`
         : media !== null && media >= cert.zonaSegura

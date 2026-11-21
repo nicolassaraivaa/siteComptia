@@ -5,7 +5,7 @@ import { formatIntervalo } from '../lib/fsrs'
 import type { Ofensiva } from '../lib/ofensiva'
 import type { ProgressoMap } from '../lib/progresso'
 import Castor from './Castor'
-import NickolsVoando from './NickolsVoando'
+import TocoVoando from './TocoVoando'
 
 type Props = { baralho: Baralho; progresso: ProgressoMap; filtro: Filtro; ofensiva: Ofensiva; onVoltar: () => void }
 
@@ -22,7 +22,7 @@ export default function Fim({ baralho, progresso, filtro, ofensiva, onVoltar }: 
   const recorde = ofensiva.atual > 1 && ofensiva.atual === ofensiva.recorde
   // decidido uma vez: a comemoração não pode mudar no meio do voo
   const [terminou] = useState(() => !proximo || proximo > new Date())
-  // os textos aparecem depois que o Nickols pousa
+  // os textos aparecem depois que o Toco pousa
   const [pousou, setPousou] = useState(!terminou)
   const onPouso = useCallback(() => setPousou(true), [])
   // depois do pouso, os textos entram um de cada vez
@@ -36,9 +36,9 @@ export default function Fim({ baralho, progresso, filtro, ofensiva, onVoltar }: 
     <div className="min-h-dvh overflow-hidden">
       <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-4 py-10 text-center">
         {terminou ? (
-          <NickolsVoando tamanho={200} onPouso={onPouso} />
+          <TocoVoando tamanho={200} onPouso={onPouso} />
         ) : (
-          <Castor pose="neutro" tamanho={170} rotulo="Nickols, o castor" className="motion-safe:animate-castor-entrar" />
+          <Castor pose="neutro" tamanho={170} rotulo="Toco, o castor" className="motion-safe:animate-castor-entrar" />
         )}
 
         <div className={`w-full ${pousou ? '' : 'invisible'}`}>
