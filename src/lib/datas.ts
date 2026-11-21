@@ -45,3 +45,10 @@ export function somarDias(dia: string, n: number): string {
   d.setUTCDate(d.getUTCDate() + n)
   return d.toISOString().slice(0, 10)
 }
+
+const fmtDataCompleta = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+
+/** "21 de nov. de 2026" */
+export function formatarDataCompleta(dia: string): string {
+  return fmtDataCompleta.format(new Date(`${dia}T12:00:00Z`))
+}

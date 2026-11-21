@@ -11,25 +11,27 @@ export type RevisaoGuardada = {
   aprendendo: string[] // cards em aprendizado que ainda vão voltar nesta sessão
 }
 
-const chave = (userId: string) => `revisao-em-andamento:${userId}`
+// A Security+ mantém a chave antiga: uma revisão em andamento sobrevive à atualização do app
+const chave = (userId: string, cert: string) =>
+  cert === 'secplus' ? `revisao-em-andamento:${userId}` : `revisao-em-andamento:${userId}:${cert}`
 
-export function lerRevisaoGuardada(userId: string): RevisaoGuardada | null {
+export function lerRevisaoGuardada(userId: string, cert: string): RevisaoGuardada | null {
   try {
-    const bruto = localStorage.getItem(chave(userId))
+    const bruto = localStorage.getItem(chave(userId, cert))
     if (!bruto) return null
     const g = JSON.parse(bruto) as RevisaoGuardada
     if (g.dia === diaSP(new Date())) return g
-    localStorage.removeItem(chave(userId))
+    localStorage.removeItem(chave(userId, cert))
   } catch {
     // sem armazenamento local a revisão só não é retomada
   }
   return null
 }
 
-export function guardarRevisao(userId: string, g: RevisaoGuardada | null) {
+export function guardarRevisao(userId: string, cert: string, g: RevisaoGuardada | null) {
   try {
-    if (g) localStorage.setItem(chave(userId), JSON.stringify(g))
-    else localStorage.removeItem(chave(userId))
+    if (g) localStorage.setItem(chave(userId, cert), JSON.stringify(g))
+    else localStorage.removeItem(chave(userId, cert))
   } catch {
     // idem
   }

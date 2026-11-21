@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { DOMINIO_COR } from '../config'
+import { dominioDe } from '../certificacoes'
+import { useCert } from '../lib/certContexto'
 import {
   corrigir,
-  PROVA_DURACAO_MS,
+  duracaoProvaMs,
   salvarResposta,
   salvarRespostas,
   type QuestaoDaProva,
@@ -53,6 +54,8 @@ export default function Simulado({
   onFinalizar,
   onSair,
 }: Props) {
+  const cert = useCert()
+  const DURACAO = duracaoProvaMs(cert)
   const [idx, setIdx] = useState(inicial?.idx ?? 0)
   const [marcadas, setMarcadas] = useState<Record<number, string[]>>(inicial?.marcadas ?? {})
   const [salvas, setSalvas] = useState<Record<number, Resposta>>({})
@@ -75,7 +78,7 @@ export default function Simulado({
   // O relógio da prova anda só fora das pausas: o início "efetivo" é empurrado pelo tempo pausado
   const pausada = prova !== undefined && pausa.desde !== null
   const inicioProva = prova ? prova.iniciadaEm + pausa.totalMs : 0
-  const restanteMs = prova ? inicioProva + PROVA_DURACAO_MS - (pausa.desde ?? agora) : null
+  const restanteMs = prova ? inicioProva + DURACAO - (pausa.desde ?? agora) : null
   const acabouTempo = restanteMs !== null && restanteMs <= 0
   const mostrarSaida = saindo && !acabouTempo
 
@@ -126,7 +129,7 @@ export default function Simulado({
     setSalvando(true)
     setErro(null)
     try {
-      await salvarResposta(userId, r)
+      await salvarResposta(userId, cert.id, r)
     } catch (e) {
       setErro((e as Error).message || 'Falha ao salvar')
       setSalvando(false)
@@ -136,7 +139,7 @@ export default function Simulado({
     onRespondida(r)
     setSalvando(false)
     return true
-  }, [marcadas, q, ciclo, salvas, simuladoId, userId, onRespondida])
+  }, [marcadas, q, ciclo, salvas, simuladoId, userId, cert.id, onRespondida])
 
   async function irPara(novo: number) {
     if (salvando || acabouTempo || pausada) return
@@ -182,7 +185,7 @@ export default function Simulado({
       setSalvando(true)
       setErro(null)
       try {
-        await salvarRespostas(userId, respostas)
+        await salvarRespostas(userId, cert.id, respostas)
       } catch (e) {
         setErro((e as Error).message || 'Falha ao salvar')
         setSalvando(false)
@@ -193,13 +196,13 @@ export default function Simulado({
       // na prova, as pausas não entram no tempo usado
       const tempoUsadoS = Math.round(
         prova
-          ? Math.min((pausa.desde ?? Date.now()) - (prova.iniciadaEm + pausa.totalMs), PROVA_DURACAO_MS) / 1000
+          ? Math.min((pausa.desde ?? Date.now()) - (prova.iniciadaEm + pausa.totalMs), DURACAO) / 1000
           : (Date.now() - iniciadoEm) / 1000,
       )
       const brancos = itens.filter((x) => (marcadas[x.questao.numero] ?? []).length === 0).map((x) => x.questao.numero)
       onFinalizar(respostas, { emBranco: brancos.length, brancos, tempoUsadoS, porTempo })
     },
-    [itens, marcadas, salvas, simuladoId, iniciadoEm, prova, pausa, userId, onFinalizar],
+    [itens, marcadas, salvas, simuladoId, iniciadoEm, prova, pausa, userId, cert.id, DURACAO, onFinalizar],
   )
 
   async function pedirFinalizar(forcar = false) {
@@ -301,7 +304,7 @@ export default function Simulado({
         </span>
         {prova ? (
           <>
-            <Cronometro inicio={inicioProva} limiteMs={PROVA_DURACAO_MS} cor={corTimer} parado={pausa.desde ?? undefined} />
+            <Cronometro inicio={inicioProva} limiteMs={DURACAO} cor={corTimer} parado={pausa.desde ?? undefined} />
             <button
               ref={botaoPausa}
               onClick={pausar}
@@ -322,7 +325,7 @@ export default function Simulado({
       </p>
 
       <article key={q.numero} className="overflow-hidden rounded-3xl border border-line bg-surface">
-        <div className="h-1.5" style={{ background: DOMINIO_COR[q.dominio] }} aria-hidden="true" />
+        <div className="h-1.5" style={{ background: dominioDe(cert, q.dominio).cor }} aria-hidden="true" />
         <div className="p-5 sm:p-7">
           <p className="mb-4 text-sm text-muted">
             Questão {idx + 1} de {itens.length} · domínio {q.dominio}
@@ -432,7 +435,7 @@ export default function Simulado({
             O tempo parou. A questão volta quando você continuar.
           </p>
           <div className="mt-5">
-            <Cronometro inicio={inicioProva} limiteMs={PROVA_DURACAO_MS} cor={corTimer} parado={pausa.desde ?? undefined} />
+            <Cronometro inicio={inicioProva} limiteMs={DURACAO} cor={corTimer} parado={pausa.desde ?? undefined} />
           </div>
           <button
             autoFocus

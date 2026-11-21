@@ -1,11 +1,11 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
-import { DOMINIO_COR, DOMINIOS } from '../config'
-import type { Dominio } from '../lib/cards'
+import { useCert } from '../lib/certContexto'
 import { diasEntre, formatarDataProva } from '../lib/datas'
 import { diaSP, montarFila, passaFiltro, type Baralho, type Filtro } from '../lib/fila'
 import { emAprendizado, formatIntervalo } from '../lib/fsrs'
 import type { Ofensiva } from '../lib/ofensiva'
 import type { ProgressoMap } from '../lib/progresso'
+import BadgeCertificacao from './BadgeCertificacao'
 import Castor from './Castor'
 import MenuConta from './MenuConta'
 import OfensivaCard from './OfensivaCard'
@@ -24,6 +24,12 @@ type Props = {
   onResultado?: (aprovado: boolean) => void
   onAlterarDataProva: () => void
   onHistorico: () => void
+  /** Volta para a tela de escolha da certificação */
+  onTrocar: () => void
+  /** Abre "Minhas certificações" */
+  onMinhas: () => void
+  /** "Pronto para a prova?" */
+  prontidao?: ReactNode
   simulado: ReactNode
   historico?: ReactNode
   progresso: ProgressoMap
@@ -32,8 +38,6 @@ type Props = {
   onFiltro: (f: Filtro) => void
   onComecar: () => void
 }
-
-const LISTA_DOMINIOS = Object.keys(DOMINIOS) as Dominio[]
 
 /** Abaixo disso a porcentagem de acerto ainda não diz nada */
 const MIN_REVISOES_ACERTO = 5
@@ -62,6 +66,9 @@ export default function Home({
   onResultado,
   onAlterarDataProva,
   onHistorico,
+  onTrocar,
+  onMinhas,
+  prontidao,
   simulado,
   historico,
   progresso,
@@ -70,6 +77,7 @@ export default function Home({
   onFiltro,
   onComecar,
 }: Props) {
+  const cert = useCert()
   // Atualiza a cada 30 s: cards em aprendizado vencem minutos depois de revisados
   const [, setTique] = useState(0)
   useEffect(() => {
@@ -102,7 +110,7 @@ export default function Home({
     proximoVolta && `+${voltando} ${voltando === 1 ? 'volta' : 'voltam'} em ${formatIntervalo(proximoVolta, now)}`,
   ].filter(Boolean) as string[]
 
-  const porDominio = LISTA_DOMINIOS.map((d) => {
+  const porDominio = cert.dominios.map(({ id: d, nome, cor }) => {
     let pendentes = 0
     let feitosHoje = 0
     let revisoes = 0
@@ -120,7 +128,7 @@ export default function Home({
         else if (diaSP(p.updatedAt) === hoje) feitosHoje++
       }
     }
-    return { d, total, pendentes, feitosHoje, acerto: acerto(revisoes, erros) }
+    return { d, nome, cor, total, pendentes, feitosHoje, acerto: acerto(revisoes, erros) }
   })
   const somar = (k: 'pendentes' | 'feitosHoje' | 'total') => porDominio.reduce((s, r) => s + r[k], 0)
   const acertoGeral = acerto(
@@ -131,10 +139,17 @@ export default function Home({
   return (
     <div className="mx-auto max-w-5xl px-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(3rem,env(safe-area-inset-bottom))] sm:px-6">
       <header className="flex items-center justify-between gap-3 py-4">
-        <p className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
-          <Castor pose="icone" tamanho={40} />
-          Sec+ SY0-701
-        </p>
+        <button
+          onClick={onTrocar}
+          className="foco -ml-1 flex min-w-0 items-center gap-2 rounded-2xl py-1 pr-3 pl-1 text-left transition-colors hover:bg-surface-2"
+          aria-label={`${cert.nome}. Trocar de certificação`}
+        >
+          <BadgeCertificacao cert={cert} tamanho={40} />
+          <span className="min-w-0">
+            <span className="block truncate text-lg leading-tight font-extrabold tracking-tight">{cert.nomeCurto}</span>
+            <span className="block text-xs text-muted">{cert.codigo} · trocar</span>
+          </span>
+        </button>
         <div className="flex items-center gap-2">
           <button
             onClick={onHistorico}
@@ -143,7 +158,7 @@ export default function Home({
             <IconeHistorico />
             Histórico
           </button>
-          <MenuConta email={email} onAlterarDataProva={onAlterarDataProva} />
+          <MenuConta email={email} onAlterarDataProva={onAlterarDataProva} onTrocar={onTrocar} onMinhas={onMinhas} />
         </div>
       </header>
 
@@ -154,7 +169,7 @@ export default function Home({
       >
         <div>
           {aprovado ? (
-            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Aprovado na Security+</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Aprovado na {cert.nomeCurto}</h1>
           ) : diasProva !== null && diasProva > 0 ? (
             <h1 className="text-3xl font-extrabold tracking-tight text-balance sm:text-4xl">
               Faltam {plural(diasProva, 'dia', 'dias')} para a prova
@@ -253,9 +268,9 @@ export default function Home({
                 >
                   <option value="recentes">Erros de 06/11 em diante</option>
                   <option value="todos">Todos os domínios</option>
-                  {LISTA_DOMINIOS.map((d) => (
-                    <option key={d} value={d}>
-                      {d} {DOMINIOS[d]}
+                  {cert.dominios.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.id} {d.nome}
                     </option>
                   ))}
                 </select>
@@ -266,6 +281,8 @@ export default function Home({
           {simulado}
         </div>
       </section>
+
+      {prontidao}
 
       {historico}
 
@@ -288,9 +305,9 @@ export default function Home({
             {porDominio.map((r) => (
               <LinhaDominio
                 key={r.d}
-                cor={DOMINIO_COR[r.d]}
+                cor={r.cor}
                 numero={r.d}
-                nome={DOMINIOS[r.d]}
+                nome={r.nome}
                 total={r.total}
                 pendentes={r.pendentes}
                 feitosHoje={r.feitosHoje}
@@ -309,8 +326,8 @@ export default function Home({
           </ul>
         </div>
         <p className="mt-2 px-1 text-xs text-muted">
-          Acerto aparece a partir de {MIN_REVISOES_ACERTO} revisões no domínio. Verde a partir de 85%, a meta para passar com
-          folga.
+          Acerto aparece a partir de {MIN_REVISOES_ACERTO} revisões no domínio. Verde a partir de {cert.zonaSegura}%, a meta
+          para passar com folga.
         </p>
       </section>
     </div>

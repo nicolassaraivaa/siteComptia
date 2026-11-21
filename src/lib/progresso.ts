@@ -15,12 +15,13 @@ type Row = { card_id: string; estado: EstadoJson; created_at: string; updated_at
 
 const PAGINA = 1000
 
-export async function carregarProgresso(): Promise<ProgressoMap> {
+export async function carregarProgresso(cert: string): Promise<ProgressoMap> {
   const map: ProgressoMap = new Map()
   for (let from = 0; ; from += PAGINA) {
     const { data, error } = await supabase
       .from('progresso')
       .select('card_id, estado, created_at, updated_at')
+      .eq('certificacao', cert)
       .order('card_id')
       .range(from, from + PAGINA - 1)
     if (error) throw error
@@ -37,18 +38,19 @@ export async function carregarProgresso(): Promise<ProgressoMap> {
   return map
 }
 
-export async function salvarProgresso(userId: string, cardId: string, card: Card, stats: Stats): Promise<void> {
+export async function salvarProgresso(userId: string, cert: string, cardId: string, card: Card, stats: Stats): Promise<void> {
   const now = new Date().toISOString()
   // created_at não é enviado: fica com a data da primeira revisão
   const { error } = await supabase.from('progresso').upsert(
     {
       user_id: userId,
+      certificacao: cert,
       card_id: cardId,
       estado: serializeCard(card, stats),
       due: card.due.toISOString(),
       updated_at: now,
     },
-    { onConflict: 'user_id,card_id' },
+    { onConflict: 'user_id,certificacao,card_id' },
   )
   if (error) throw error
 }

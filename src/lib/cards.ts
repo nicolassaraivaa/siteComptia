@@ -1,8 +1,8 @@
-import type { DOMINIOS, ORIGENS } from '../config'
-import cardsJson from '../data/cards.json'
+import type { ORIGENS } from '../config'
 import type { Questao } from './questoes'
 
-export type Dominio = keyof typeof DOMINIOS
+/** Id do domínio dentro da certificação (ex.: "1.0"); a lista fica em src/certificacoes.ts */
+export type Dominio = string
 export type Origem = (typeof ORIGENS)[number]
 
 export type CardData = {
@@ -19,6 +19,3 @@ export type CardData = {
   /** Dia (YYYY-MM-DD) do erro mais recente no simulado, nos cards de questões */
   ultimo_erro?: string
 }
-
-/** Cards escritos à mão (cards.json). O baralho completo inclui também as questões erradas no simulado. */
-export const CARDS = cardsJson as CardData[]

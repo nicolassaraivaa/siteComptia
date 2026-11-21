@@ -1,3 +1,4 @@
+import type { Certificacao } from '../certificacoes'
 import type { CardData, Dominio } from './cards'
 import { diaSP } from './datas'
 import { supabase } from './supabase'
@@ -34,12 +35,13 @@ export type Resposta = {
 
 const PAGINA = 1000
 
-export async function carregarQuestoes(): Promise<Questao[]> {
+export async function carregarQuestoes(cert: string): Promise<Questao[]> {
   const todas: Questao[] = []
   for (let from = 0; ; from += PAGINA) {
     const { data, error } = await supabase
       .from('questoes')
       .select('*')
+      .eq('certificacao', cert)
       .order('numero')
       .range(from, from + PAGINA - 1)
     if (error) throw error
@@ -49,12 +51,13 @@ export async function carregarQuestoes(): Promise<Questao[]> {
   return todas
 }
 
-export async function carregarRespostas(): Promise<Resposta[]> {
+export async function carregarRespostas(cert: string): Promise<Resposta[]> {
   const todas: Resposta[] = []
   for (let from = 0; ; from += PAGINA) {
     const { data, error } = await supabase
       .from('simulado_respostas')
       .select('questao, ciclo, simulado_id, marcadas, resultado, respondida_em')
+      .eq('certificacao', cert)
       // desempate pela chave: várias respostas têm o mesmo horário (as em branco ao finalizar),
       // e sem ordem total a paginação pode pular ou repetir linhas entre as páginas
       .order('respondida_em')
@@ -68,22 +71,19 @@ export async function carregarRespostas(): Promise<Resposta[]> {
   return todas
 }
 
-export async function salvarRespostas(userId: string, rs: Resposta[]): Promise<void> {
+export async function salvarRespostas(userId: string, cert: string, rs: Resposta[]): Promise<void> {
   if (rs.length === 0) return
   const { error } = await supabase
     .from('simulado_respostas')
     .upsert(
-      rs.map((r) => ({ user_id: userId, ...r })),
-      { onConflict: 'user_id,questao,ciclo' },
+      rs.map((r) => ({ user_id: userId, certificacao: cert, ...r })),
+      { onConflict: 'user_id,certificacao,questao,ciclo' },
     )
   if (error) throw error
 }
 
-export async function salvarResposta(userId: string, r: Resposta): Promise<void> {
-  const { error } = await supabase
-    .from('simulado_respostas')
-    .upsert({ user_id: userId, ...r }, { onConflict: 'user_id,questao,ciclo' })
-  if (error) throw error
+export async function salvarResposta(userId: string, cert: string, r: Resposta): Promise<void> {
+  await salvarRespostas(userId, cert, [r])
 }
 
 /** Só acerta marcando todas as corretas; em "escolha 2", acertar uma é parcial (conta como erro) */
@@ -202,18 +202,21 @@ export function cardsDeQuestoes(questoes: Questao[], respostas: Resposta[], zera
 }
 
 // ---------------------------------------------------------------------------
-// Simulado de prova: 90 questões, 1h30, distribuídas pelos pesos oficiais
+// Simulado de prova: formato e pesos de cada certificação (src/certificacoes.ts)
 
-export const PROVA_QUESTOES = 90
-export const PROVA_DURACAO_MS = 90 * 60 * 1000
+/** Duração do simulado de prova, em ms */
+export function duracaoProvaMs(cert: Certificacao): number {
+  return cert.prova.duracaoMin * 60 * 1000
+}
 
-/** Pesos oficiais da SY0-701 por domínio */
-const PESOS: Record<Dominio, number> = { '1.0': 12, '2.0': 22, '3.0': 18, '4.0': 28, '5.0': 20 }
-
-/** Quantas questões de cada domínio numa prova de n questões (maiores restos): 11, 20, 16, 25, 18 para 90 */
-export function cotasPorDominio(n: number): Record<Dominio, number> {
-  const dominios = Object.keys(PESOS) as Dominio[]
-  const exatas = dominios.map((d) => ({ d, v: (PESOS[d] * n) / 100 }))
+/**
+ * Quantas questões de cada domínio numa prova de n questões, pelos pesos oficiais (maiores restos).
+ * Security+ com 90: 11, 20, 16, 25, 18.
+ */
+export function cotasPorDominio(n: number, pesos: Record<Dominio, number>): Record<Dominio, number> {
+  const dominios = Object.keys(pesos)
+  const total = Object.values(pesos).reduce((s, x) => s + x, 0) || 1
+  const exatas = dominios.map((d) => ({ d, v: (pesos[d] * n) / total }))
   const cotas = Object.fromEntries(exatas.map(({ d, v }) => [d, Math.floor(v)])) as Record<Dominio, number>
   let falta = n - Object.values(cotas).reduce((s, x) => s + x, 0)
   for (const { d } of [...exatas].sort((a, b) => b.v - Math.floor(b.v) - (a.v - Math.floor(a.v)))) {
@@ -249,10 +252,11 @@ export type QuestaoDaProva = { questao: Questao; ciclo: number }
  * Se faltarem, completa com questões do próximo ciclo (que não incluem nenhuma das ineditas
  * já escolhidas), e essas já contam como feitas no próximo ciclo.
  */
-export function sortearProva(questoes: Questao[], estado: EstadoCiclo): QuestaoDaProva[] {
-  const n = Math.min(PROVA_QUESTOES, questoes.length)
+export function sortearProva(questoes: Questao[], estado: EstadoCiclo, cert: Certificacao): QuestaoDaProva[] {
+  const pesos = Object.fromEntries(cert.dominios.map((d) => [d.id, d.peso]))
+  const n = Math.min(cert.prova.questoes, questoes.length)
   const ineditas = questoes.filter((q) => !estado.vistas.has(q.numero))
-  const cotas = cotasPorDominio(n)
+  const cotas = cotasPorDominio(n, pesos)
 
   if (ineditas.length >= n) {
     return sortear(escolherPorCota(ineditas, n, cotas), n).map((questao) => ({ questao, ciclo: estado.ciclo }))
@@ -262,10 +266,10 @@ export function sortearProva(questoes: Questao[], estado: EstadoCiclo): QuestaoD
   const doCiclo = ineditas
   const faltam = n - doCiclo.length
   const restante = { ...cotas }
-  for (const q of doCiclo) restante[q.dominio] = Math.max(0, restante[q.dominio] - 1)
+  for (const q of doCiclo) restante[q.dominio] = Math.max(0, (restante[q.dominio] ?? 0) - 1)
   const somaRestante = Object.values(restante).reduce((s, x) => s + x, 0)
   // ajusta as cotas restantes para somarem exatamente "faltam"
-  const cotasProximo = somaRestante === faltam ? restante : cotasPorDominio(faltam)
+  const cotasProximo = somaRestante === faltam ? restante : cotasPorDominio(faltam, pesos)
   const jaEscolhidas = new Set(doCiclo.map((q) => q.numero))
   const proximo = escolherPorCota(
     questoes.filter((q) => !jaEscolhidas.has(q.numero)),
@@ -291,17 +295,18 @@ export type Prova = {
   em_branco: number
 }
 
-export async function carregarProvas(): Promise<Prova[]> {
+export async function carregarProvas(cert: string): Promise<Prova[]> {
   const { data, error } = await supabase
     .from('provas')
     .select('id, iniciada_em, finalizada_em, tempo_usado_s, total, em_branco')
+    .eq('certificacao', cert)
     .order('finalizada_em', { ascending: false })
   if (error) throw error
   return data as Prova[]
 }
 
-export async function salvarProva(userId: string, p: Prova): Promise<void> {
-  const { error } = await supabase.from('provas').upsert({ user_id: userId, ...p }, { onConflict: 'id' })
+export async function salvarProva(userId: string, cert: string, p: Prova): Promise<void> {
+  const { error } = await supabase.from('provas').upsert({ user_id: userId, certificacao: cert, ...p }, { onConflict: 'id' })
   if (error) throw error
 }
 
@@ -309,13 +314,15 @@ export async function salvarProva(userId: string, p: Prova): Promise<void> {
 export type TempoSimulado = { id: string; iniciado_em: string; finalizado_em: string; tempo_s: number }
 
 /** Segundos gastos em cada simulado normal, pelo id */
-export async function carregarTempos(): Promise<Map<string, number>> {
-  const { data, error } = await supabase.from('simulado_tempos').select('id, tempo_s')
+export async function carregarTempos(cert: string): Promise<Map<string, number>> {
+  const { data, error } = await supabase.from('simulado_tempos').select('id, tempo_s').eq('certificacao', cert)
   if (error) throw error
   return new Map((data as { id: string; tempo_s: number }[]).map((t) => [t.id, t.tempo_s]))
 }
 
-export async function salvarTempo(userId: string, t: TempoSimulado): Promise<void> {
-  const { error } = await supabase.from('simulado_tempos').upsert({ user_id: userId, ...t }, { onConflict: 'id' })
+export async function salvarTempo(userId: string, cert: string, t: TempoSimulado): Promise<void> {
+  const { error } = await supabase
+    .from('simulado_tempos')
+    .upsert({ user_id: userId, certificacao: cert, ...t }, { onConflict: 'id' })
   if (error) throw error
 }

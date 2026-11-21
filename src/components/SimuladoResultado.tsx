@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { DOMINIO_COR, DOMINIOS } from '../config'
-import type { Dominio } from '../lib/cards'
+import { dominioDe } from '../certificacoes'
+import { useCert } from '../lib/certContexto'
 import { formatarSegundos } from '../lib/datas'
 import {
   errou,
@@ -33,8 +33,6 @@ type Props = {
   tempoS?: number
 }
 
-/** Acerto a partir do qual consideramos "zona segura" (não é a nota oficial de 100 a 900) */
-export const ZONA_SEGURA = 85
 
 function formatarDuracao(s: number) {
   const h = Math.floor(s / 3600)
@@ -85,6 +83,10 @@ export default function SimuladoResultado({
   prova,
   tempoS,
 }: Props) {
+  const cert = useCert()
+  const ZONA = cert.zonaSegura
+  const cor = (d: string) => dominioDe(cert, d).cor
+  const nomeDominio = (d: string) => dominioDe(cert, d).nome
   const [respostas, setRespostas] = useState(iniciais)
   const [erro, setErro] = useState<string | null>(null)
   const [filtro, setFiltro] = useState<Reincidencia | null>(null)
@@ -119,8 +121,8 @@ export default function SimuladoResultado({
   const pendentes = respostas.length - corrigidas.length
   const pct = corrigidas.length === 0 ? 0 : Math.round((certas / corrigidas.length) * 100)
 
-  const porDominio = (Object.keys(DOMINIOS) as Dominio[])
-    .map((d) => {
+  const porDominio = cert.dominios
+    .map(({ id: d }) => {
       const rs = corrigidas.filter((r) => porQuestao.get(r.questao)?.dominio === d)
       return { d, total: rs.length, certas: rs.filter((r) => r.resultado === 'certa').length }
     })
@@ -130,7 +132,7 @@ export default function SimuladoResultado({
     const nova: Resposta = { ...r, resultado: acertou ? 'certa' : 'errada' }
     setErro(null)
     try {
-      await salvarResposta(userId, nova)
+      await salvarResposta(userId, cert.id, nova)
     } catch (e) {
       setErro((e as Error).message)
       return
@@ -177,13 +179,13 @@ export default function SimuladoResultado({
             <p
               className="rounded-xl p-3 text-sm font-medium"
               style={{
-                background: `color-mix(in srgb, ${pct >= ZONA_SEGURA ? 'var(--good)' : 'var(--d4)'} 14%, var(--surface))`,
+                background: `color-mix(in srgb, ${pct >= ZONA ? 'var(--good)' : 'var(--d4)'} 14%, var(--surface))`,
               }}
             >
-              {pct >= ZONA_SEGURA
-                ? `Zona segura: ${ZONA_SEGURA}% ou mais de acerto.`
-                : `Abaixo da zona segura (${ZONA_SEGURA}%). Faltaram ${Math.ceil((ZONA_SEGURA / 100) * corrigidas.length) - certas} acertos.`}{' '}
-              <span className="font-normal text-muted">Referência de estudo, não é a nota oficial (100 a 900).</span>
+              {pct >= ZONA
+                ? `Zona segura: ${ZONA}% ou mais de acerto.`
+                : `Abaixo da zona segura (${ZONA}%). Faltaram ${Math.ceil((ZONA / 100) * corrigidas.length) - certas} acertos.`}{' '}
+              <span className="font-normal text-muted">Referência de estudo, não é a nota oficial.</span>
             </p>
             <p className="text-sm text-muted tabular-nums">
               {prova.porTempo ? 'Tempo esgotado' : `Tempo usado: ${formatarDuracao(prova.tempoUsadoS)} de ${formatarDuracao(prova.duracaoS)}`}
@@ -290,13 +292,13 @@ export default function SimuladoResultado({
               const p = Math.round((c / total) * 100)
               return (
                 <li key={d} className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-3">
-                  <span className="w-1.5 self-stretch rounded-full" style={{ background: DOMINIO_COR[d] }} aria-hidden="true" />
+                  <span className="w-1.5 self-stretch rounded-full" style={{ background: cor(d) }} aria-hidden="true" />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-medium">
-                      <span className="font-bold">{d}</span> {DOMINIOS[d]}
+                      <span className="font-bold">{d}</span> {nomeDominio(d)}
                     </span>
                     <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-surface-2">
-                      <span className="block h-full rounded-full" style={{ width: `${p}%`, background: DOMINIO_COR[d] }} />
+                      <span className="block h-full rounded-full" style={{ width: `${p}%`, background: cor(d) }} />
                     </span>
                   </span>
                   <span className="w-16 shrink-0 text-right text-sm tabular-nums">

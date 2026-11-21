@@ -81,13 +81,13 @@ export default function Login() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4 py-10">
       <Castor pose="neutro" tamanho={120} className="-ml-3 mb-2" rotulo="Nickols, o castor mascote" />
-      <h1 className="text-3xl font-extrabold tracking-tight">Sec+ SY0-701</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight">Nickols Certificações</h1>
       <p className="mt-1 mb-8 text-muted">
         {criando
           ? 'Crie sua conta para salvar o progresso.'
           : recuperando
             ? 'Informe seu email e enviaremos um link para criar uma nova senha.'
-            : 'Flashcards e simulados para a CompTIA Security+ SY0-701.'}
+            : 'Flashcards e simulados para as suas certificações de TI.'}
       </p>
 
       <form onSubmit={enviar} className="flex flex-col gap-4">

@@ -1,12 +1,15 @@
-# Sec+ Flashcards — instruções
+# Nickols Certificações — instruções
 
-App de flashcards para a Security+ SY0-701 (prova em 21/11/2026). Cards em `src/data/cards.json`, progresso no Supabase.
+App de flashcards e simulados para várias certificações (começou com a Security+ SY0-701). Cada certificação é descrita em `src/certificacoes.ts` (domínios, pesos, formato da prova, badge, validade). Progresso no Supabase, separado por certificação (coluna `certificacao`).
 
-O app tem várias contas (amigos também usam). Os cards de `cards.json` são as minhas anotações e só aparecem na minha conta (`perfil.cards_pessoais = true`). Para todas as contas, as questões erradas no simulado viram flashcards automaticamente.
+As minhas anotações ficam em `src/data/<id-da-certificacao>/cards.json` (Security+: `src/data/secplus/cards.json`) e só aparecem na minha conta (`perfil.cards_pessoais = true`). O app tem várias contas (amigos também usam). Para todas as contas, as questões erradas no simulado viram flashcards automaticamente.
+
+Badges oficiais (baixados do Credly) vão em `public/certificacoes/<id>.png`.
 
 ## Quando eu mandar erros de simulado ou anotações
 
-1. Leia `src/data/cards.json` inteiro antes de criar qualquer coisa, para evitar duplicatas.
+0. Se não ficar claro de qual certificação são, pergunte. Os domínios válidos são os da certificação em `src/certificacoes.ts`.
+1. Leia o `cards.json` da certificação inteiro antes de criar qualquer coisa, para evitar duplicatas.
 2. Para cada erro, gere de 1 a 3 cards seguindo as regras abaixo.
 3. Se o conceito já tem card: não duplique. Melhore o verso do card existente (mantendo o id) ou, se o erro for uma confusão diferente, crie um card de contraste novo.
 4. `origem`: `"simulado"` para erros do dia. `"backlog"` só quando eu disser que é a carga das anotações antigas.

@@ -1,146 +1,50 @@
 import type { Session } from '@supabase/supabase-js'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { Card, Grade } from 'ts-fsrs'
-import Aprovado from './components/Aprovado'
-import Comemoracao from './components/Comemoracao'
-import DataProva from './components/DataProva'
-import Fim from './components/Fim'
-import Historico from './components/Historico'
-import Home from './components/Home'
+import { useCallback, useEffect, useState } from 'react'
+import AppCertificacao from './AppCertificacao'
+import { certificacaoPorId, type Certificacao } from './certificacoes'
+import BadgeCertificacao from './components/BadgeCertificacao'
+import Castor from './components/Castor'
+import Entrada from './components/Entrada'
 import Login from './components/Login'
+import MinhasCertificacoes from './components/MinhasCertificacoes'
 import NovaSenha from './components/NovaSenha'
-import ObjetivoSimulado from './components/ObjetivoSimulado'
-import Revisao from './components/Revisao'
-import HistoricoProvas from './components/HistoricoProvas'
-import Simulado, { type EstadoSalvo, type InfoFinal } from './components/Simulado'
-import SimuladoCard, { type ProvaEmAndamento } from './components/SimuladoCard'
-import SimuladoResultado from './components/SimuladoResultado'
-import { CARDS } from './lib/cards'
-import { diaSP, montarBaralho, type Filtro } from './lib/fila'
-import type { Stats } from './lib/fsrs'
-import { carregarCardsPorDia, type CardsPorDia } from './lib/historico'
-import { calcularOfensiva, carregarDias, diasDasRespostas, diasDoProgresso, registrarDia } from './lib/ofensiva'
-import {
-  aguardandoResultado,
-  aprovadoSemObjetivo,
-  carregarPerfil,
-  PERFIL_VAZIO,
-  salvarResultado,
-  type Perfil,
-} from './lib/perfil'
-import { carregarProgresso, type ProgressoMap } from './lib/progresso'
-import { guardarRevisao, lerRevisaoGuardada } from './lib/sessaoRevisao'
-import {
-  cardsDeQuestoes,
-  carregarProvas,
-  carregarTempos,
-  carregarQuestoes,
-  carregarRespostas,
-  estadoCiclo,
-  PROVA_DURACAO_MS,
-  salvarProva,
-  salvarTempo,
-  sortear,
-  sortearProva,
-  type Prova,
-  type Questao,
-  type QuestaoDaProva,
-  type Resposta,
-} from './lib/questoes'
+import { diaSP } from './lib/datas'
+import { calcularOfensiva, carregarDias } from './lib/ofensiva'
+import { carregarConta, carregarPerfis, CONTA_VAZIA, salvarUltimaCertificacao, type Perfil, type PerfilConta } from './lib/perfil'
 import { supabase } from './lib/supabase'
+import { carregarTrilha, type ItemTrilha } from './lib/trilha'
 
-type Tela =
-  | 'home'
-  | 'revisao'
-  | 'fim'
-  | 'simulado'
-  | 'resultado'
-  | 'data-prova'
-  | 'historico'
-  | 'historico-simulado'
-  | 'aprovado'
-  | 'reprovado'
+/**
+ * Onde a pessoa está. Fica na URL (?cert=secplus, ?pagina=certificacoes) para dar para salvar nos
+ * favoritos e usar o voltar do navegador. Parâmetros de busca, e não caminhos, para funcionar em
+ * qualquer hospedagem sem configurar redirecionamento.
+ */
+type Rota = { tipo: 'entrada' } | { tipo: 'minhas' } | { tipo: 'cert'; id: string }
 
-type SimuladoAtivo = {
-  id: string
-  itens: QuestaoDaProva[]
-  /** Quando começou: o cronômetro conta daqui */
-  iniciadoEm: number
-  /** Presente no simulado de prova (90 questões, 1h30) */
-  prova?: { iniciadaEm: number }
-  inicial?: EstadoSalvo
-  respostas: Resposta[]
-  info?: InfoFinal
+function lerRota(): Rota {
+  const p = new URLSearchParams(window.location.search)
+  const cert = p.get('cert')
+  if (cert) return { tipo: 'cert', id: cert }
+  if (p.get('pagina') === 'certificacoes') return { tipo: 'minhas' }
+  return { tipo: 'entrada' }
 }
 
-/** Prova em andamento guardada no navegador para sobreviver a um recarregamento da página */
-type ProvaGuardada = { id: string; iniciadaEm: number; itens: { numero: number; ciclo: number }[]; estado: EstadoSalvo }
-
-const chaveProva = (userId: string) => `prova-em-andamento:${userId}`
-
-function lerProvaGuardada(userId: string): ProvaGuardada | null {
-  try {
-    const bruto = localStorage.getItem(chaveProva(userId))
-    return bruto ? (JSON.parse(bruto) as ProvaGuardada) : null
-  } catch {
-    return null
-  }
-}
-
-function provaPausada(p: ProvaGuardada): boolean {
-  return p.estado.pausa?.desde != null
-}
-
-/** O que a tela inicial mostra de uma prova guardada: onde parou e, se pausada, quanto tempo sobra */
-function resumoProva(p: ProvaGuardada): ProvaEmAndamento {
-  const pausa = p.estado.pausa
-  return {
-    questao: p.estado.idx + 1,
-    total: p.itens.length,
-    restanteMs:
-      pausa?.desde != null ? Math.max(0, p.iniciadaEm + pausa.totalMs + PROVA_DURACAO_MS - pausa.desde) : undefined,
-  }
-}
-
-function guardarProva(userId: string, p: ProvaGuardada | null) {
-  try {
-    if (p) localStorage.setItem(chaveProva(userId), JSON.stringify(p))
-    else localStorage.removeItem(chaveProva(userId))
-  } catch {
-    // sem armazenamento local a prova só não é retomada após recarregar
-  }
+function urlDa(rota: Rota): string {
+  const base = window.location.pathname
+  if (rota.tipo === 'cert') return `${base}?cert=${encodeURIComponent(rota.id)}`
+  if (rota.tipo === 'minhas') return `${base}?pagina=certificacoes`
+  return base
 }
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
   const [recuperandoSenha, setRecuperandoSenha] = useState(false)
-  const [progresso, setProgresso] = useState<ProgressoMap | null>(null)
-  const [erroCarga, setErroCarga] = useState<string | null>(null)
-  const [tela, setTela] = useState<Tela>('home')
-  // Começa nos erros das últimas 2 semanas; dá para trocar na tela inicial
-  const [filtro, setFiltro] = useState<Filtro>('recentes')
-  const [dias, setDias] = useState<Set<string>>(new Set())
-  const diasSalvos = useRef<Set<string>>(new Set()) // dias já gravados na tabela atividade
-  const diasRef = useRef(dias) // para saber, ao salvar, se é a primeira revisão do dia
-  useEffect(() => {
-    diasRef.current = dias
-  }, [dias])
-  // O castor comemora na primeira revisão de cada dia (a ofensiva do dia está garantida)
-  const [comemoracao, setComemoracao] = useState<{ dias: number; recorde: boolean } | null>(null)
-  const fecharComemoracao = useCallback(() => setComemoracao(null), [])
-  const [questoes, setQuestoes] = useState<Questao[] | null>(null)
-  const [respostas, setRespostas] = useState<Resposta[]>([])
-  const [erroQuestoes, setErroQuestoes] = useState<string | null>(null)
-  const [simulado, setSimulado] = useState<SimuladoAtivo | null>(null)
-  const [provas, setProvas] = useState<Prova[] | null>(null)
-  // Segundos gastos em cada simulado normal; null = indisponível (tabela simulado_tempos ainda não criada)
-  const [tempos, setTempos] = useState<Map<string, number> | null>(null)
-  // null = indisponível (tabela revisoes ainda não criada)
-  const [cardsPorDia, setCardsPorDia] = useState<CardsPorDia | null>(null)
-  const [fimHistorico, setFimHistorico] = useState(() => diaSP(new Date()))
-  const [simuladoAberto, setSimuladoAberto] = useState<string | null>(null)
-  // undefined = carregando; null = primeiro acesso (sem perfil ainda)
-  const [perfil, setPerfil] = useState<Perfil | null | undefined>(undefined)
+  const [rota, setRota] = useState<Rota>(lerRota)
+  const [conta, setConta] = useState<PerfilConta | null>(null)
+  // Dados da tela de entrada e de "Minhas certificações" (null = carregando)
+  const [perfis, setPerfis] = useState<Map<string, Perfil> | null>(null)
+  const [trilha, setTrilha] = useState<ItemTrilha[] | null>(null)
+  const [dias, setDias] = useState<Set<string> | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -152,557 +56,149 @@ export default function App() {
     return () => data.subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    const voltar = () => setRota(lerRota())
+    window.addEventListener('popstate', voltar)
+    return () => window.removeEventListener('popstate', voltar)
+  }, [])
+
+  const ir = useCallback((nova: Rota) => {
+    window.history.pushState(null, '', urlDa(nova))
+    setRota(nova)
+    window.scrollTo({ top: 0 })
+  }, [])
+
   const userId = session?.user.id
 
-  // Cada carregamento ganha um número; respostas de um carregamento antigo (ex.: conta que saiu) são descartadas
-  const geracao = useRef(0)
-  // Retomada após recarregar a página: só acontece uma vez por login
-  const retomouProva = useRef(false)
-  const [revisaoDecidida, setRevisaoDecidida] = useState(false)
-
-  /** Zera tudo que pertence a uma conta, para nada vazar de um usuário para outro no mesmo navegador */
-  const limparConta = useCallback(() => {
-    geracao.current++ // invalida carregamentos em andamento da conta anterior
-    setProgresso(null)
-    setPerfil(undefined)
-    setQuestoes(null)
-    setRespostas([])
-    setErroQuestoes(null)
-    setSimulado(null)
-    setProvas(null)
-    setTempos(null)
-    setCardsPorDia(null)
-    setComemoracao(null)
-    retomouProva.current = false
-    setRevisaoDecidida(false)
-    setDias(new Set())
-    diasSalvos.current = new Set()
-    setTela('home')
-    setFiltro('recentes')
-  }, [])
-
-  const carregar = useCallback(() => {
-    const minha = ++geracao.current
-    const atual = () => minha === geracao.current
-    setErroCarga(null)
-    setProgresso(null)
-    setPerfil(undefined)
-    carregarPerfil()
-      .then((p) => atual() && setPerfil(p))
+  // Conta (dono, última certificação): uma vez por login
+  useEffect(() => {
+    setConta(null)
+    if (!userId) return
+    let vivo = true
+    carregarConta()
+      .then((c) => vivo && setConta(c))
       .catch((e: Error) => {
-        if (!atual()) return
-        // sem a tabela perfil o app segue funcionando, só sem cards pessoais e sem data da prova
-        console.warn('Perfil indisponível:', e.message)
-        setPerfil(PERFIL_VAZIO)
+        console.warn('Perfil da conta indisponível:', e.message)
+        if (vivo) setConta(CONTA_VAZIA)
       })
-    const diasP = carregarDias().catch((e: Error) => {
-      console.warn('Ofensiva indisponível:', e.message)
-      return new Set<string>()
-    })
-    Promise.all([carregarProgresso(), diasP])
-      .then(([prog, salvos]) => {
-        if (!atual()) return
-        diasSalvos.current = salvos
-        // soma aos dias do simulado, que podem ter chegado antes
-        setDias((prev) => new Set([...prev, ...salvos, ...diasDoProgresso(prog)]))
-        setProgresso(prog)
-      })
-      .catch((e: Error) => atual() && setErroCarga(e.message))
+    return () => {
+      vivo = false
+    }
+  }, [userId])
 
-    // Histórico por dia é opcional (tabela revisoes)
-    carregarCardsPorDia()
-      .then((m) => atual() && setCardsPorDia(m))
-      .catch((e: Error) => console.warn('Histórico de cards indisponível:', e.message))
-
-    // Histórico de provas é opcional (tabela provas)
-    carregarProvas()
-      .then((ps) => atual() && setProvas(ps))
-      .catch((e: Error) => console.warn('Histórico de provas indisponível:', e.message))
-
-    // Tempo dos simulados é opcional (tabela simulado_tempos)
-    carregarTempos()
-      .then((ts) => atual() && setTempos(ts))
-      .catch((e: Error) => console.warn('Tempo dos simulados indisponível:', e.message))
-
-    // Simulado é opcional: se as tabelas ainda não existem, os flashcards continuam funcionando
-    setErroQuestoes(null)
-    Promise.all([carregarQuestoes(), carregarRespostas()])
-      .then(([qs, rs]) => {
-        if (!atual()) return
-        if (qs.length === 0) throw new Error('Nenhuma questão no banco. Rode os arquivos SQL do simulado.')
-        setQuestoes(qs)
-        setRespostas(rs)
-        // dias com questões respondidas também contam para a ofensiva
-        setDias((prev) => new Set([...prev, ...diasDasRespostas(rs)]))
-      })
+  // Entrada e "Minhas certificações" recarregam ao abrir: uma certificação pode ter mudado data,
+  // resultado, ofensiva ou conquistas enquanto estava aberta
+  const foraDaCert = rota.tipo !== 'cert'
+  useEffect(() => {
+    if (!userId || !foraDaCert) return
+    let vivo = true
+    setPerfis(null)
+    setTrilha(null)
+    setDias(null)
+    carregarPerfis()
+      .then((p) => vivo && setPerfis(p))
       .catch((e: Error) => {
-        if (!atual()) return
-        console.warn('Simulado indisponível:', e.message)
-        setErroQuestoes(`Simulado indisponível: ${e.message}`)
+        console.warn('Perfis indisponíveis:', e.message)
+        if (vivo) setPerfis(new Map())
       })
-  }, [])
-
-  useEffect(() => {
-    limparConta()
-    if (userId) carregar()
-  }, [userId, carregar, limparConta])
-
-  /** Conta o dia na ofensiva (card revisado ou questão do simulado) e grava na tabela atividade */
-  const marcarDia = useCallback(
-    (dia: string) => {
-      setDias((prev) => (prev.has(dia) ? prev : new Set(prev).add(dia)))
-      if (userId && !diasSalvos.current.has(dia)) {
-        diasSalvos.current.add(dia)
-        registrarDia(userId, dia).catch((e: Error) => {
-          diasSalvos.current.delete(dia) // tenta de novo na próxima atividade
-          console.warn('Falha ao registrar ofensiva:', e.message)
-        })
-      }
-    },
-    [userId],
-  )
-
-  const onSalvo = useCallback(
-    (cardId: string, card: Card, stats: Stats, nota: Grade) => {
-      const now = new Date()
-      const dia = diaSP(now)
-      setCardsPorDia((m) => {
-        if (!m) return m
-        const d = m.get(dia) ?? { cards: 0, erros: 0 }
-        return new Map(m).set(dia, { cards: d.cards + 1, erros: d.erros + (nota === 1 ? 1 : 0) })
+    carregarTrilha()
+      .then((t) => vivo && setTrilha(t))
+      .catch((e: Error) => {
+        console.warn('Trilha indisponível:', e.message)
+        if (vivo) setTrilha([])
       })
-      setProgresso((prev) => {
-        const next = new Map(prev)
-        next.set(cardId, { card, createdAt: prev?.get(cardId)?.createdAt ?? now, updatedAt: now, stats })
-        return next
+    carregarDias()
+      .then((d) => vivo && setDias(d))
+      .catch((e: Error) => {
+        console.warn('Ofensiva indisponível:', e.message)
+        if (vivo) setDias(new Set())
       })
-      const hoje = diaSP(now)
-      if (!diasRef.current.has(hoje)) {
-        const antes = calcularOfensiva(diasRef.current, hoje)
-        const novos = new Set(diasRef.current).add(hoje)
-        const depois = calcularOfensiva(novos, hoje)
-        diasRef.current = novos
-        setComemoracao({ dias: depois.atual, recorde: depois.atual > antes.recorde })
-      }
-      marcarDia(hoje)
-    },
-    [marcarDia],
-  )
-
-  const ofensiva = useMemo(() => calcularOfensiva(dias, diaSP(new Date())), [dias])
-
-  const zeradosDia = perfil?.flashcards_zerados_em ? diaSP(new Date(perfil.flashcards_zerados_em)) : null
-  // Baralho = cards escritos à mão + questões erradas no simulado
-  const baralho = useMemo(
-    () =>
-      montarBaralho([
-        // cards escritos à mão só aparecem na conta do dono (perfil.cards_pessoais);
-        // depois de zerar os flashcards, só os criados a partir daquele dia
-        ...(perfil?.cards_pessoais ? CARDS.filter((c) => !zeradosDia || c.adicionado_em > zeradosDia) : []),
-        ...(questoes ? cardsDeQuestoes(questoes, respostas, perfil?.flashcards_zerados_em ?? null) : []),
-      ]),
-    [perfil, zeradosDia, questoes, respostas],
-  )
-  const ciclo = useMemo(
-    () => (questoes ? estadoCiclo(questoes, respostas, perfil?.ciclo_inicio ?? 1) : null),
-    [questoes, respostas, perfil],
-  )
-
-  const mesclarRespostas = useCallback(
-    (novas: Resposta[]) => {
-      const chave = (r: Resposta) => `${r.questao}:${r.ciclo}`
-      const trocadas = new Set(novas.map(chave))
-      setRespostas((rs) => [...rs.filter((x) => !trocadas.has(chave(x))), ...novas])
-      for (const dia of new Set(diasDasRespostas(novas))) marcarDia(dia)
-    },
-    [marcarDia],
-  )
-  const onRespondida = useCallback((r: Resposta) => mesclarRespostas([r]), [mesclarRespostas])
-
-  // Aprovada e começando um simulado novo: antes pergunta se vai refazer a prova ou só treinar
-  const [objetivo, setObjetivo] = useState<(() => void) | null>(null)
-
-  async function informarResultado(aprovado: boolean) {
-    if (!userId || !perfil?.data_prova) return
-    const resultado = aprovado ? 'aprovado' : 'reprovado'
-    try {
-      await salvarResultado(userId, resultado, perfil.data_prova)
-    } catch (e) {
-      window.alert(`Não foi possível salvar o resultado (${(e as Error).message}). Tente de novo.`)
-      return
+    return () => {
+      vivo = false
     }
-    setPerfil({ ...perfil, resultado, resultado_data: perfil.data_prova })
-    setTela(aprovado ? 'aprovado' : 'reprovado')
-    window.scrollTo({ top: 0 })
-  }
+  }, [userId, foraDaCert])
 
-  /** jaPerguntou: a pessoa acabou de escolher o objetivo, não pergunta de novo */
-  function comecarSimulado(quantidade: number, jaPerguntou = false) {
-    if (!questoes || !ciclo) return
-    if (!jaPerguntou && aprovadoSemObjetivo(perfil)) return setObjetivo(() => () => comecarSimulado(quantidade, true))
-    const porNumero = new Map(questoes.map((q) => [q.numero, q]))
-    const itens = sortear(ciclo.restantes, quantidade).map((n) => ({ questao: porNumero.get(n)!, ciclo: ciclo.ciclo }))
-    setSimulado({ id: crypto.randomUUID(), itens, iniciadoEm: Date.now(), respostas: [] })
-    setTela('simulado')
-    window.scrollTo({ top: 0 })
-  }
-
-  /** Abre a prova guardada no navegador de onde parou (pausada, se estava pausada) */
-  const retomarProva = useCallback(
-    (g: ProvaGuardada): boolean => {
-      if (!questoes || !userId) return false
-      const porNumero = new Map(questoes.map((q) => [q.numero, q]))
-      const itens = g.itens.flatMap((x) => {
-        const questao = porNumero.get(x.numero)
-        return questao ? [{ questao, ciclo: x.ciclo }] : []
-      })
-      if (itens.length === 0) {
-        guardarProva(userId, null)
-        return false
-      }
-      setSimulado({ id: g.id, itens, iniciadoEm: g.iniciadaEm, prova: { iniciadaEm: g.iniciadaEm }, inicial: g.estado, respostas: [] })
-      setTela('simulado')
-      window.scrollTo({ top: 0 })
-      return true
+  const escolher = useCallback(
+    (cert: Certificacao) => {
+      if (!userId) return
+      setConta((c) => (c ? { ...c, ultima_certificacao: cert.id } : c))
+      salvarUltimaCertificacao(userId, cert.id).catch((e: Error) =>
+        console.warn('Falha ao lembrar a última certificação:', e.message),
+      )
+      ir({ tipo: 'cert', id: cert.id })
     },
-    [questoes, userId],
+    [userId, ir],
   )
-
-  function comecarProva(jaPerguntou = false) {
-    if (!questoes || !ciclo || !userId) return
-    // Nunca sobrescreve uma prova em andamento: o botão retoma a que está guardada
-    const guardada = lerProvaGuardada(userId)
-    if (guardada && retomarProva(guardada)) return
-    if (!jaPerguntou && aprovadoSemObjetivo(perfil)) return setObjetivo(() => () => comecarProva(true))
-    const itens = sortearProva(questoes, ciclo)
-    const id = crypto.randomUUID()
-    const iniciadaEm = Date.now()
-    guardarProva(userId, {
-      id,
-      iniciadaEm,
-      itens: itens.map((x) => ({ numero: x.questao.numero, ciclo: x.ciclo })),
-      estado: { idx: 0, marcadas: {} },
-    })
-    setSimulado({ id, itens, iniciadoEm: iniciadaEm, prova: { iniciadaEm }, respostas: [] })
-    setTela('simulado')
-    window.scrollTo({ top: 0 })
-  }
-
-  // Prova interrompida com o tempo correndo (aba fechada, página recarregada): volta direto para ela.
-  // Pausada, ela espera: o botão do simulado de prova na tela inicial vira "Retomar".
-  useEffect(() => {
-    if (!questoes || !userId || retomouProva.current) return
-    retomouProva.current = true
-    const g = lerProvaGuardada(userId)
-    if (g && !provaPausada(g)) retomarProva(g)
-  }, [questoes, userId, retomarProva])
-
-  // Revisão de flashcards interrompida: volta para ela, no mesmo card.
-  // Espera as questões (ou o erro delas) porque as questões erradas também são cards.
-  useEffect(() => {
-    if (!userId || revisaoDecidida || !progresso || perfil === undefined) return
-    if (!questoes && !erroQuestoes) return
-    setRevisaoDecidida(true)
-    const prova = lerProvaGuardada(userId)
-    if (prova && !provaPausada(prova)) return // a prova com o tempo correndo tem prioridade
-    const g = lerRevisaoGuardada(userId)
-    if (!g) return
-    setFiltro(g.filtro)
-    setTela('revisao')
-  }, [userId, revisaoDecidida, progresso, perfil, questoes, erroQuestoes])
-
-  const onEstadoProva = useCallback(
-    (estado: EstadoSalvo) => {
-      if (!userId || !simulado?.prova) return
-      guardarProva(userId, {
-        id: simulado.id,
-        iniciadaEm: simulado.prova.iniciadaEm,
-        itens: simulado.itens.map((x) => ({ numero: x.questao.numero, ciclo: x.ciclo })),
-        estado,
-      })
-    },
-    [userId, simulado],
-  )
-
-  function finalizarSimulado(rs: Resposta[], info: InfoFinal) {
-    if (!simulado || !userId) return
-    mesclarRespostas(rs)
-    if (simulado.prova) {
-      guardarProva(userId, null)
-      const registro: Prova = {
-        id: simulado.id,
-        iniciada_em: new Date(simulado.prova.iniciadaEm).toISOString(),
-        finalizada_em: new Date().toISOString(),
-        tempo_usado_s: info.tempoUsadoS,
-        total: simulado.itens.length,
-        em_branco: info.emBranco,
-      }
-      setProvas((ps) => (ps ? [registro, ...ps.filter((p) => p.id !== registro.id)] : ps))
-      salvarProva(userId, registro).catch((e: Error) => console.warn('Falha ao salvar histórico da prova:', e.message))
-    } else {
-      const tempo = {
-        id: simulado.id,
-        iniciado_em: new Date(simulado.iniciadoEm).toISOString(),
-        finalizado_em: new Date().toISOString(),
-        tempo_s: info.tempoUsadoS,
-      }
-      setTempos((ts) => (ts ? new Map(ts).set(tempo.id, tempo.tempo_s) : ts))
-      salvarTempo(userId, tempo).catch((e: Error) => console.warn('Falha ao salvar o tempo do simulado:', e.message))
-    }
-    setSimulado({ ...simulado, respostas: rs, info })
-    setTela('resultado')
-    window.scrollTo({ top: 0 })
-  }
 
   if (session === undefined) return <Centro>Carregando…</Centro>
   if (!session || !userId) return <Login />
   if (recuperandoSenha) return <NovaSenha onPronto={() => setRecuperandoSenha(false)} />
+  if (!conta) return <Centro>Carregando…</Centro>
 
-  if (erroCarga) {
+  const email = session.user.email ?? ''
+
+  if (rota.tipo === 'cert') {
+    const cert = certificacaoPorId(rota.id)
+    if (!cert || !cert.disponivel) return <EmBreve cert={cert} onVoltar={() => ir({ tipo: 'entrada' })} />
     return (
-      <Centro>
-        <p className="mb-1 font-bold">Não foi possível carregar seu progresso</p>
-        <p className="mb-6 max-w-sm text-sm text-muted">{erroCarga}. Verifique a conexão e tente de novo.</p>
-        <button
-          onClick={carregar}
-          className="foco rounded-2xl bg-primary px-6 py-3 font-bold text-on-primary transition-opacity hover:opacity-90"
-        >
-          Tentar de novo
-        </button>
-      </Centro>
-    )
-  }
-  if (!progresso || perfil === undefined) return <Centro>Carregando progresso…</Centro>
-
-  // enquanto decide se volta para uma revisão interrompida, não mostra a home por um instante
-  if (tela === 'home' && !revisaoDecidida && lerRevisaoGuardada(userId)) return <Centro>Carregando…</Centro>
-
-  const dataProva = perfil?.data_prova ?? null
-
-  if (perfil === null || tela === 'data-prova' || tela === 'reprovado') {
-    const primeiroAcesso = perfil === null
-    return (
-      <DataProva
+      <AppCertificacao
+        // remonta ao trocar de certificação ou de conta: nada de uma vaza para a outra
+        key={`${userId}:${cert.id}`}
+        email={email}
         userId={userId}
-        atual={dataProva}
-        treino={perfil?.treino}
-        primeiroAcesso={primeiroAcesso}
-        intro={
-          tela === 'reprovado'
-            ? {
-                pose: 'neutro',
-                titulo: 'Faz parte. Bora para a próxima!',
-                texto: 'Seus flashcards e o histórico do simulado continuam aqui. Quando é a nova prova?',
-              }
-            : undefined
-        }
-        onSalvo={(data, treino) => {
-          setPerfil({ ...(perfil ?? PERFIL_VAZIO), data_prova: data, treino })
-          setTela('home')
-        }}
-        onCancelar={primeiroAcesso ? undefined : () => setTela('home')}
+        cert={cert}
+        conta={conta}
+        onTrocar={() => ir({ tipo: 'entrada' })}
+        onMinhas={() => ir({ tipo: 'minhas' })}
       />
     )
   }
 
-  if (tela === 'aprovado') {
-    return (
-      <Aprovado
-        totalFlashcards={progresso.size}
-        onContinuar={() => setTela('home')}
-        onZerado={() => {
-          // a revisão guardada aponta para cards que não existem mais
-          guardarRevisao(userId, null)
-          setTela('home')
-          carregar()
-        }}
-      />
-    )
-  }
+  if (!perfis || !trilha || !dias) return <Centro>Carregando…</Centro>
 
-  if (tela === 'simulado' && simulado) {
+  if (rota.tipo === 'minhas') {
     return (
-      <Simulado
-        key={simulado.id}
+      <MinhasCertificacoes
         userId={userId}
-        itens={simulado.itens}
-        simuladoId={simulado.id}
-        iniciadoEm={simulado.iniciadoEm}
-        prova={simulado.prova}
-        inicial={simulado.inicial}
-        onEstado={simulado.prova ? onEstadoProva : undefined}
-        onRespondida={onRespondida}
-        onFinalizar={finalizarSimulado}
-        onSair={() => {
-          setSimulado(null)
-          setTela('home')
-        }}
+        trilha={trilha}
+        onTrilha={setTrilha}
+        onTreinar={escolher}
+        onVoltar={() => ir({ tipo: 'entrada' })}
       />
     )
   }
-  if (tela === 'resultado' && simulado) {
-    return (
-      <SimuladoResultado
-        userId={userId}
-        questoes={simulado.itens.map((x) => x.questao)}
-        respostas={simulado.respostas}
-        todasRespostas={respostas}
-        brancos={simulado.info?.brancos}
-        prova={simulado.prova && simulado.info ? { ...simulado.info, duracaoS: PROVA_DURACAO_MS / 1000 } : undefined}
-        tempoS={!simulado.prova ? simulado.info?.tempoUsadoS : undefined}
-        onAtualizada={onRespondida}
-        onVoltar={() => {
-          setSimulado(null)
-          setTela('home')
-        }}
-      />
-    )
-  }
-
-  const telaComemoracao = comemoracao && (
-    <Comemoracao dias={comemoracao.dias} recorde={comemoracao.recorde} onFechar={fecharComemoracao} />
-  )
-
-  if (tela === 'revisao') {
-    return (
-      <>
-      <Revisao
-        baralho={baralho}
-        dataProva={dataProva}
-        userId={userId}
-        progresso={progresso}
-        filtro={filtro}
-        onSalvo={onSalvo}
-        onFim={() => {
-          // a tela de fim já mostra a ofensiva; não sobrepõe as duas comemorações
-          setComemoracao(null)
-          setTela('fim')
-        }}
-        onSair={() => setTela('home')}
-      />
-      {telaComemoracao}
-      </>
-    )
-  }
-  if (tela === 'historico-simulado' && simuladoAberto) {
-    const doSimulado = respostas
-      .filter((r) => r.simulado_id === simuladoAberto)
-      .sort((a, b) => a.respondida_em.localeCompare(b.respondida_em))
-    const porNumero = new Map((questoes ?? []).map((q) => [q.numero, q]))
-    const registro = provas?.find((p) => p.id === simuladoAberto)
-    const duracaoS = PROVA_DURACAO_MS / 1000
-    const inicio = doSimulado[0] ? new Date(doSimulado[0].respondida_em) : new Date()
-    return (
-      <SimuladoResultado
-        key={simuladoAberto}
-        userId={userId}
-        questoes={doSimulado.flatMap((r) => porNumero.get(r.questao) ?? [])}
-        respostas={doSimulado}
-        todasRespostas={respostas}
-        doHistorico={{
-          titulo: inicio.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }),
-        }}
-        // em branco = contou como erro sem nenhuma alternativa marcada
-        // (simulações não guardam alternativas, então não dá para saber se ficaram em branco)
-        brancos={doSimulado
-          .filter((r) => r.resultado === 'errada' && r.marcadas.length === 0 && porNumero.get(r.questao)?.tipo !== 'simulacao')
-          .map((r) => r.questao)}
-        prova={
-          registro && {
-            tempoUsadoS: registro.tempo_usado_s,
-            duracaoS,
-            emBranco: registro.em_branco,
-            porTempo: registro.tempo_usado_s >= duracaoS,
-          }
-        }
-        tempoS={registro ? undefined : tempos?.get(simuladoAberto)}
-        onAtualizada={onRespondida}
-        onVoltar={() => {
-          setSimuladoAberto(null)
-          setTela('historico')
-        }}
-      />
-    )
-  }
-  if (tela === 'historico') {
-    return (
-      <Historico
-        respostas={respostas}
-        cardsPorDia={cardsPorDia}
-        provas={new Set(provas?.map((p) => p.id))}
-        tempos={new Map([...(tempos ?? []), ...(provas ?? []).map((p) => [p.id, p.tempo_usado_s] as const)])}
-        fim={fimHistorico}
-        onFim={setFimHistorico}
-        onAbrirSimulado={(id) => {
-          setSimuladoAberto(id)
-          setTela('historico-simulado')
-          window.scrollTo({ top: 0 })
-        }}
-        onVoltar={() => setTela('home')}
-      />
-    )
-  }
-  if (tela === 'fim') {
-    return (
-      <>
-        <Fim baralho={baralho} progresso={progresso} filtro={filtro} ofensiva={ofensiva} onVoltar={() => setTela('home')} />
-        {telaComemoracao}
-      </>
-    )
-  }
-
-  // Prova pausada e deixada para depois: o card do simulado oferece retomar em vez de começar outra
-  const provaSalva = lerProvaGuardada(userId)
 
   return (
-    <>
-    <Home
-      email={session.user.email ?? ''}
-      baralho={baralho}
-      dataProva={dataProva}
-      treino={perfil.treino}
-      aprovado={perfil.resultado === 'aprovado' && perfil.resultado_data === dataProva}
-      perguntarResultado={aguardandoResultado(perfil, diaSP(new Date()))}
-      onResultado={(aprovado) => void informarResultado(aprovado)}
-      onAlterarDataProva={() => setTela('data-prova')}
-      onHistorico={() => {
-        setTela('historico')
-        window.scrollTo({ top: 0 })
-      }}
-      simulado={
-        <SimuladoCard
-          total={questoes?.length ?? 0}
-          estado={ciclo}
-          indisponivel={erroQuestoes}
-          onComecar={(n) => comecarSimulado(n)}
-          onComecarProva={() => comecarProva()}
-          provaEmAndamento={provaSalva && resumoProva(provaSalva)}
-        />
-      }
-      historico={provas && provas.length > 0 ? <HistoricoProvas provas={provas} respostas={respostas} /> : null}
-      progresso={progresso}
-      ofensiva={ofensiva}
-      filtro={filtro}
-      onFiltro={setFiltro}
-      onComecar={() => setTela('revisao')}
+    <Entrada
+      email={email}
+      perfis={perfis}
+      ultima={conta.ultima_certificacao}
+      trilha={trilha}
+      ofensiva={calcularOfensiva(dias, diaSP(new Date()))}
+      onEscolher={escolher}
+      onMinhas={() => ir({ tipo: 'minhas' })}
     />
-    {objetivo && (
-      <ObjetivoSimulado
-        userId={userId}
-        onRefazer={() => {
-          setObjetivo(null)
-          setTela('data-prova')
-        }}
-        onTreino={() => {
-          const seguir = objetivo
-          setObjetivo(null)
-          setPerfil({ ...perfil, data_prova: null, treino: true })
-          seguir()
-        }}
-        onCancelar={() => setObjetivo(null)}
-      />
-    )}
-    </>
+  )
+}
+
+/** Certificação ainda sem banco de questões (ou endereço que não existe) */
+function EmBreve({ cert, onVoltar }: { cert: Certificacao | null; onVoltar: () => void }) {
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-sm flex-col items-center justify-center px-4 py-10 text-center">
+      {cert ? <BadgeCertificacao cert={cert} tamanho={96} apagado /> : <Castor pose="pensando" tamanho={120} />}
+      <h1 className="mt-4 text-3xl font-extrabold tracking-tight">{cert ? `${cert.nomeCurto} em breve` : 'Página não encontrada'}</h1>
+      <p className="mt-2 text-muted">
+        {cert
+          ? 'O banco de questões desta certificação ainda está sendo preparado.'
+          : 'Essa certificação não existe no app.'}
+      </p>
+      <button
+        onClick={onVoltar}
+        className="foco mt-8 w-full rounded-2xl bg-primary py-4 text-lg font-bold text-on-primary transition-opacity hover:opacity-90"
+      >
+        Escolher certificação
+      </button>
+    </main>
   )
 }
 

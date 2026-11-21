@@ -1,10 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-type Props = { email: string; onAlterarDataProva: () => void }
+type Props = {
+  email: string
+  /** Só dentro de uma certificação */
+  onAlterarDataProva?: () => void
+  /** Volta para a escolha da certificação */
+  onTrocar?: () => void
+  onMinhas?: () => void
+}
 
-/** Menu do canto: dados da conta, data da prova e sair */
-export default function MenuConta({ email, onAlterarDataProva }: Props) {
+/** Menu do canto: dados da conta, certificações, data da prova e sair */
+export default function MenuConta({ email, onAlterarDataProva, onTrocar, onMinhas }: Props) {
+  const itens = [
+    onTrocar && { rotulo: 'Trocar certificação', acao: onTrocar },
+    onMinhas && { rotulo: 'Minhas certificações', acao: onMinhas },
+    onAlterarDataProva && { rotulo: 'Alterar data da prova', acao: onAlterarDataProva },
+  ].filter(Boolean) as { rotulo: string; acao: () => void }[]
   const [aberto, setAberto] = useState(false)
   const raiz = useRef<HTMLDivElement>(null)
 
@@ -52,16 +64,19 @@ export default function MenuConta({ email, onAlterarDataProva }: Props) {
             <span className="block text-xs text-muted">Conectado como</span>
             <span className="block truncate font-medium">{email}</span>
           </p>
-          <button
-            role="menuitem"
-            onClick={() => {
-              setAberto(false)
-              onAlterarDataProva()
-            }}
-            className="foco block w-full px-4 py-3 text-left text-sm hover:bg-surface-2"
-          >
-            Alterar data da prova
-          </button>
+          {itens.map((i) => (
+            <button
+              key={i.rotulo}
+              role="menuitem"
+              onClick={() => {
+                setAberto(false)
+                i.acao()
+              }}
+              className="foco block w-full px-4 py-3 text-left text-sm hover:bg-surface-2"
+            >
+              {i.rotulo}
+            </button>
+          ))}
           <button
             role="menuitem"
             onClick={() => supabase.auth.signOut()}

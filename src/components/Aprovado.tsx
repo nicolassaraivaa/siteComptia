@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useCert } from '../lib/certContexto'
 import { zerarFlashcards } from '../lib/perfil'
 import Castor from './Castor'
 
@@ -18,6 +19,7 @@ const FESTA_MS = 3500
 
 /** Aprovação na prova: o Nickols bate palma e depois pergunta se mantém ou apaga os flashcards */
 export default function Aprovado({ totalFlashcards, onContinuar, onZerado }: Props) {
+  const cert = useCert()
   const [etapa, setEtapa] = useState<Etapa>('festa')
   const [erro, setErro] = useState<string | null>(null)
   const foco = useRef<HTMLButtonElement>(null)
@@ -37,7 +39,7 @@ export default function Aprovado({ totalFlashcards, onContinuar, onZerado }: Pro
     setErro(null)
     setEtapa('apagando')
     try {
-      await zerarFlashcards()
+      await zerarFlashcards(cert.id)
     } catch (e) {
       setErro(`Não foi possível apagar (${(e as Error).message}). Nada foi apagado; tente de novo.`)
       setEtapa('confirmar')
@@ -60,7 +62,7 @@ export default function Aprovado({ totalFlashcards, onContinuar, onZerado }: Pro
       {etapa !== 'zerado' && (
         <>
           <h1 className="mt-4 text-4xl font-extrabold tracking-tight">Aprovado!</h1>
-          <p className="mt-2 font-medium text-[var(--good)]">Parabéns pela Security+. O Nickols está aplaudindo de pé.</p>
+          <p className="mt-2 font-medium text-[var(--good)]">Parabéns pela {cert.nomeCurto}. O Nickols está aplaudindo de pé.</p>
         </>
       )}
 

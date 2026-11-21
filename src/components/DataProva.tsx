@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { diaSP } from '../lib/datas'
+import { useCert } from '../lib/certContexto'
 import { salvarDataProva, salvarTreino } from '../lib/perfil'
 import Castor, { type Pose } from './Castor'
 
@@ -21,6 +22,7 @@ type Props = {
 export default function DataProva({ userId, atual, treino = false, primeiroAcesso, intro, onSalvo, onCancelar }: Props) {
   // uma data que já passou (a prova feita) não volta preenchida
   const [data, setData] = useState(() => (atual && atual >= diaSP(new Date()) ? atual : ''))
+  const cert = useCert()
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const hoje = diaSP(new Date())
@@ -30,8 +32,8 @@ export default function DataProva({ userId, atual, treino = false, primeiroAcess
     if (valor && valor < hoje) return setErro('Escolha uma data a partir de hoje.')
     setSalvando(true)
     try {
-      if (soTreinar) await salvarTreino(userId)
-      else await salvarDataProva(userId, valor)
+      if (soTreinar) await salvarTreino(userId, cert.id)
+      else await salvarDataProva(userId, cert.id, valor)
     } catch (e) {
       setErro(`Não foi possível salvar (${(e as Error).message}). Tente de novo.`)
       setSalvando(false)
@@ -44,7 +46,7 @@ export default function DataProva({ userId, atual, treino = false, primeiroAcess
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4 py-10">
       {(primeiroAcesso || intro) && <Castor pose={intro?.pose ?? 'neutro'} tamanho={120} className="-ml-3 mb-2" />}
       <h1 className="text-3xl font-extrabold tracking-tight text-balance">
-        {intro?.titulo ?? (primeiroAcesso ? 'Bem-vindo ao Sec+ SY0-701' : 'Data da prova')}
+        {intro?.titulo ?? (primeiroAcesso ? `Bem-vindo à ${cert.nomeCurto}` : `Data da prova · ${cert.nomeCurto}`)}
       </h1>
       {intro && <p className="mt-2 text-muted">{intro.texto}</p>}
       <p className={`${intro ? 'mt-4' : 'mt-2'} mb-8 text-muted`}>

@@ -8,13 +8,13 @@ export type CardsDoDia = { cards: number; erros: number }
 export type CardsPorDia = Map<string, CardsDoDia>
 
 /** Grava uma linha por avaliação de card (tabela revisoes) */
-export async function registrarRevisao(userId: string, cardId: string, nota: Grade): Promise<void> {
-  const { error } = await supabase.from('revisoes').insert({ user_id: userId, card_id: cardId, nota })
+export async function registrarRevisao(userId: string, cert: string, cardId: string, nota: Grade): Promise<void> {
+  const { error } = await supabase.from('revisoes').insert({ user_id: userId, certificacao: cert, card_id: cardId, nota })
   if (error) throw error
 }
 
-export async function carregarCardsPorDia(): Promise<CardsPorDia> {
-  const { data, error } = await supabase.from('revisoes_por_dia').select('dia, cards, erros')
+export async function carregarCardsPorDia(cert: string): Promise<CardsPorDia> {
+  const { data, error } = await supabase.from('revisoes_por_dia').select('dia, cards, erros').eq('certificacao', cert)
   if (error) throw error
   return new Map((data as { dia: string; cards: number; erros: number }[]).map((r) => [r.dia, { cards: r.cards, erros: r.erros }]))
 }

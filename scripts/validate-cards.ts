@@ -1,23 +1,35 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { DOMINIOS, ORIGENS } from '../src/config.ts'
+import { ORIGENS } from '../src/config.ts'
+import { CERTIFICACOES } from '../src/certificacoes.ts'
 
-const path = fileURLToPath(new URL('../src/data/cards.json', import.meta.url))
 const CAMPOS_TEXTO = ['id', 'frente', 'verso', 'dominio', 'origem', 'adicionado_em'] as const
+let falhou = false
 
+// Um cards.json por certificação: src/data/<id>/cards.json
+for (const cert of CERTIFICACOES) {
+  const arquivo = `src/data/${cert.id}/cards.json`
+  const path = fileURLToPath(new URL(`../${arquivo}`, import.meta.url))
+  if (!existsSync(path)) continue
+  const DOMINIOS = Object.fromEntries(cert.dominios.map((d) => [d.id, d.nome]))
+  if (!validar(arquivo, path, DOMINIOS)) falhou = true
+}
+process.exit(falhou ? 1 : 0)
+
+function validar(arquivo: string, path: string, DOMINIOS: Record<string, string>): boolean {
 const erros: string[] = []
 let cards: unknown
 
 try {
   cards = JSON.parse(readFileSync(path, 'utf8'))
 } catch (e) {
-  console.error(`cards.json inválido: ${(e as Error).message}`)
-  process.exit(1)
+  console.error(`${arquivo} inválido: ${(e as Error).message}`)
+  return false
 }
 
 if (!Array.isArray(cards)) {
-  console.error('cards.json precisa ser um array')
-  process.exit(1)
+  console.error(`${arquivo} precisa ser um array`)
+  return false
 }
 
 const ids = new Set<string>()
@@ -63,9 +75,11 @@ cards.forEach((card: Record<string, unknown>, i) => {
 })
 
 if (erros.length > 0) {
-  console.error(`✗ ${erros.length} erro(s) em cards.json:`)
+  console.error(`✗ ${erros.length} erro(s) em ${arquivo}:`)
   for (const e of erros) console.error(`  - ${e}`)
-  process.exit(1)
+  return false
 }
 
-console.log(`✓ ${cards.length} cards válidos`)
+console.log(`✓ ${arquivo}: ${cards.length} cards válidos`)
+return true
+}

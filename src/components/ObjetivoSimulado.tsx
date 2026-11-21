@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useCert } from '../lib/certContexto'
 import { salvarTreino } from '../lib/perfil'
 import Castor from './Castor'
 
@@ -13,6 +14,7 @@ type Props = {
 
 /** Depois da aprovação, antes de um simulado novo: vai refazer a prova ou é só para treinar? */
 export default function ObjetivoSimulado({ userId, onRefazer, onTreino, onCancelar }: Props) {
+  const cert = useCert()
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
@@ -20,7 +22,7 @@ export default function ObjetivoSimulado({ userId, onRefazer, onTreino, onCancel
     setErro(null)
     setSalvando(true)
     try {
-      await salvarTreino(userId)
+      await salvarTreino(userId, cert.id)
     } catch (e) {
       setErro(`Não foi possível salvar (${(e as Error).message}). Tente de novo.`)
       setSalvando(false)

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { createEmptyCard, type Card, type Grade } from 'ts-fsrs'
-import { DOMINIO_COR, DOMINIOS } from '../config'
+import { dominioDe } from '../certificacoes'
+import { useCert } from '../lib/certContexto'
 import { diaSP, montarFila, passaFiltro, type Baralho, type Filtro, type ItemFila } from '../lib/fila'
 import { BOTOES, emAprendizado, formatIntervalo, previa, somarStats, type Stats } from '../lib/fsrs'
 import { registrarRevisao } from '../lib/historico'
@@ -65,12 +66,12 @@ function avancar(s: Sessao, now: Date, forcar = false): Sessao {
  * Monta a sessão a partir da fila. Se a página foi recarregada no meio de uma revisão,
  * continua de onde parou: mesmo card na tela, mesma contagem e os cards em aprendizado que iam voltar.
  */
-function sessaoInicial(baralho: Baralho, progresso: ProgressoMap, filtro: Filtro, userId: string, now: Date) {
+function sessaoInicial(baralho: Baralho, progresso: ProgressoMap, filtro: Filtro, userId: string, cert: string, now: Date) {
   const fila = montarFila(baralho, progresso, filtro, now)
   const principal = [...fila.revisoes, ...fila.novosSimulado, ...fila.novosBacklog]
   let aprendendo: Aprendendo[] = fila.aprendizado.map((i) => ({ data: i.data, card: i.card! }))
 
-  const g = lerRevisaoGuardada(userId)
+  const g = lerRevisaoGuardada(userId, cert)
   if (!g || g.filtro !== filtro) return { sessao: avancar({ principal, aprendendo, atual: null, feitos: 0 }, now), mostrando: false }
 
   const naSessao = new Set(aprendendo.map((a) => a.data.id))
@@ -97,9 +98,10 @@ function sessaoInicial(baralho: Baralho, progresso: ProgressoMap, filtro: Filtro
 }
 
 export default function Revisao({ baralho, dataProva, userId, progresso, filtro, onSalvo, onFim, onSair }: Props) {
+  const cert = useCert()
   const [inicio] = useState(() => {
     const now = new Date()
-    const { sessao, mostrando } = sessaoInicial(baralho, progresso, filtro, userId, now)
+    const { sessao, mostrando } = sessaoInicial(baralho, progresso, filtro, userId, cert.id, now)
     const atual = sessao.atual
     const preview = mostrando && atual ? { now, cards: previa(atual.card ?? createEmptyCard(now), now, dataProva) } : null
     return { sessao, preview }
@@ -133,14 +135,14 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
 
   useEffect(() => {
     if (!acabou) return
-    guardarRevisao(userId, null)
+    guardarRevisao(userId, cert.id, null)
     onFim()
-  }, [acabou, onFim, userId])
+  }, [acabou, onFim, userId, cert.id])
 
   // Guarda onde a revisão está, para continuar daqui se a página for recarregada
   useEffect(() => {
     if (acabou) return
-    guardarRevisao(userId, {
+    guardarRevisao(userId, cert.id, {
       dia: diaSP(new Date()),
       filtro,
       feitos,
@@ -148,12 +150,12 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
       mostrando,
       aprendendo: aprendendo.map((a) => a.data.id),
     })
-  }, [userId, filtro, feitos, atual, mostrando, aprendendo, acabou])
+  }, [userId, cert.id, filtro, feitos, atual, mostrando, aprendendo, acabou])
 
   const sair = useCallback(() => {
-    guardarRevisao(userId, null)
+    guardarRevisao(userId, cert.id, null)
     onSair()
-  }, [userId, onSair])
+  }, [userId, cert.id, onSair])
 
   // Enquanto espera um card de aprendizado, atualiza o contador e puxa o card quando vencer
   useEffect(() => {
@@ -178,7 +180,7 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
       setSalvando(true)
       setErro(null)
       try {
-        await salvarProgresso(userId, p.item.data.id, p.card, p.stats)
+        await salvarProgresso(userId, cert.id, p.item.data.id, p.card, p.stats)
       } catch (e) {
         setErro((e as Error).message || 'Falha ao salvar')
         setPendente(p)
@@ -188,7 +190,7 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
       avaliados.current.add(p.item.data.id)
       onSalvo(p.item.data.id, p.card, p.stats, p.nota)
       // histórico por dia: se falhar, a revisão em si já está salva
-      registrarRevisao(userId, p.item.data.id, p.nota).catch((e: Error) =>
+      registrarRevisao(userId, cert.id, p.item.data.id, p.nota).catch((e: Error) =>
         console.warn('Falha ao registrar no histórico:', e.message),
       )
       setPendente(null)
@@ -201,7 +203,7 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
       })
       setAgora(new Date())
     },
-    [userId, onSalvo, proximo],
+    [userId, cert.id, onSalvo, proximo],
   )
 
   const avaliar = useCallback(
@@ -284,14 +286,14 @@ export default function Revisao({ baralho, dataProva, userId, progresso, filtro,
           <>
             <article
               key={atual.data.id}
-              style={{ '--dc': DOMINIO_COR[atual.data.dominio] } as CSSProperties}
+              style={{ '--dc': dominioDe(cert, atual.data.dominio).cor } as CSSProperties}
               className="overflow-hidden rounded-3xl border border-line bg-surface"
             >
               <div className="h-1.5 bg-[var(--dc)]" aria-hidden="true" />
               <div className="p-5 sm:p-7">
                 <p className="flex items-center gap-2 text-sm">
                   <span className="font-bold text-[var(--dc)] tabular-nums">{atual.data.dominio}</span>
-                  <span className="min-w-0 truncate text-muted">{DOMINIOS[atual.data.dominio]}</span>
+                  <span className="min-w-0 truncate text-muted">{dominioDe(cert, atual.data.dominio).nome}</span>
                   {!atual.card && (
                     <span className="ml-auto shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium">Novo</span>
                   )}

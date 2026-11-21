@@ -1,5 +1,5 @@
 import type { Prova, Resposta } from '../lib/questoes'
-import { ZONA_SEGURA } from './SimuladoResultado'
+import { useCert } from '../lib/certContexto'
 
 const fmtData = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 
@@ -9,6 +9,7 @@ function minutos(s: number) {
 
 /** Provas já feitas, da mais recente para a mais antiga, com a nota calculada das respostas */
 export default function HistoricoProvas({ provas, respostas }: { provas: Prova[]; respostas: Resposta[] }) {
+  const cert = useCert()
   return (
     <section aria-labelledby="historico-titulo" className="mt-10">
       <div className="mb-1 flex flex-wrap items-baseline justify-between gap-x-4">
@@ -22,7 +23,7 @@ export default function HistoricoProvas({ provas, respostas }: { provas: Prova[]
           const rs = respostas.filter((r) => r.simulado_id === p.id && r.resultado !== 'pendente')
           const certas = rs.filter((r) => r.resultado === 'certa').length
           const pct = rs.length === 0 ? null : Math.round((certas / rs.length) * 100)
-          const segura = pct !== null && pct >= ZONA_SEGURA
+          const segura = pct !== null && pct >= cert.zonaSegura
           return (
             <li
               key={p.id}
