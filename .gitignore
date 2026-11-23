@@ -27,6 +27,10 @@ dist-ssr
 .env
 .env.local
 
-# Material do simulado (não versionar)
+# Material de estudo e originais (não versionar): PDFs das questões, saída do importador, badges originais
+materiais/
 *.pdf
 questoes-import/
+
+# Saída temporária do gerador do mascote
+castor-mascote/out/

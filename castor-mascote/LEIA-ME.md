@@ -14,7 +14,7 @@
 | `castor-icone.svg` | Só a cabeça, fundo transparente (avatar, header) |
 | `favicon.svg` | Favicon com contorno reforçado pra ler em 16–32px |
 | `png/` | Fallbacks estáticos (favicon 16/32, apple-touch-icon 180, logo 512, poses 512) |
-| `gerador-build.js` | Script que gera todos os SVGs. Mude cores no objeto `C` e rode `node gerador-build.js` |
+| `gerador-build.cjs` | Script que gera todos os SVGs em `out/`. Mude cores no objeto `C`, rode `node gerador-build.cjs` e copie as poses para cá e para `public/mascote/` |
 
 As animações são CSS embutido em cada SVG: funcionam com `<img>`, sem JS.
 Também respeitam `prefers-reduced-motion` (o castor fica parado pra quem desativou animações no sistema).

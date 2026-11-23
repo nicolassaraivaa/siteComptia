@@ -30,6 +30,11 @@ export type Certificacao = {
   emissor: string
   /** Badge oficial (baixado do Credly) em public/certificacoes/; sem o arquivo aparece um selo neutro */
   badge: string
+  /**
+   * Badge com fundo branco (sem transparência), para não virar um quadrado branco no tema escuro:
+   * 'disco' recorta num círculo (badges redondos), 'cartao' num quadrado de cantos arredondados (escudos)
+   */
+  badgeFundo?: 'disco' | 'cartao'
   dominios: DominioCert[]
   /** Simulado de prova: quantas questões e quanto tempo */
   prova: { questoes: number; duracaoMin: number }
@@ -51,6 +56,7 @@ export const CERTIFICACOES: Certificacao[] = [
     nomeCurto: 'Security+',
     emissor: 'CompTIA',
     badge: '/certificacoes/secplus.png',
+    badgeFundo: 'disco',
     dominios: [
       { id: '1.0', nome: 'General Security Concepts', cor: 'var(--d1)', peso: 12 },
       { id: '2.0', nome: 'Threats, Vulnerabilities, and Mitigations', cor: 'var(--d2)', peso: 22 },
@@ -71,6 +77,7 @@ export const CERTIFICACOES: Certificacao[] = [
     nomeCurto: 'AZ-900',
     emissor: 'Microsoft',
     badge: '/certificacoes/az900.png',
+    badgeFundo: 'cartao',
     // Provisório: conferir domínios, pesos e formato no guia oficial antes de importar as questões
     dominios: [
       { id: '1.0', nome: 'Describe cloud concepts', cor: 'var(--d1)', peso: 27 },

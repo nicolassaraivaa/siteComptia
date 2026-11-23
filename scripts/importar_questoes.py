@@ -2,9 +2,9 @@
 Extrai as questões do PDF do simulado (SY0-701 EN/PT-BR) para JSON + imagens.
 
 Uso (precisa de PyMuPDF: pip install pymupdf):
-    python scripts/importar_questoes.py SY0-701_PT-BR_completo.pdf questoes-import/
+    python scripts/importar_questoes.py materiais/secplus/SY0-701_PT-BR_completo.pdf materiais/secplus/questoes-import/
 
-Saída (fora do git):
+Saída (fora do git, em materiais/secplus/):
     questoes-import/questoes.json
     questoes-import/imagens/q{N}_{k}.{ext}   -> enviar para o bucket "questoes" do Storage
     questoes-import/sql/questoes-{1..4}.sql  -> rodar no SQL Editor depois de supabase/simulado.sql

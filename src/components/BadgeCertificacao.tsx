@@ -35,7 +35,13 @@ export default function BadgeCertificacao({ cert, rotulo, tamanho = 64, apagado 
           draggable={false}
           onLoad={() => setCarregou(true)}
           onError={() => setCarregou(false)}
-          className={`absolute inset-0 h-full w-full object-contain select-none ${carregou ? '' : 'invisible'} ${filtro}`}
+          className={`absolute inset-0 h-full w-full object-contain select-none ${
+            cert.badgeFundo === 'disco'
+              ? 'rounded-full bg-white ring-1 ring-line'
+              : cert.badgeFundo === 'cartao'
+                ? 'rounded-[18%] bg-white p-[4%] ring-1 ring-line'
+                : ''
+          } ${carregou ? '' : 'invisible'} ${filtro}`}
         />
       )}
     </span>
